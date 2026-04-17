@@ -17,13 +17,25 @@ interface TeamScores {
   };
 }
 
+interface VoterTeamData {
+  scores: {
+    [criteriaId: string]: number;
+  };
+  comment?: string;
+}
+
 interface VoteResults {
   teams: {
     [team: string]: TeamScores;
   };
+  voterScores?: {
+    [voterId: string]: {
+      [team: string]: VoterTeamData;
+    };
+  };
 }
 
-type TabType = "results" | "manage";
+type TabType = "results" | "ranking" | "comments" | "manage";
 
 export default function AdminPage() {
   const [password, setPassword] = useState("");
@@ -156,10 +168,10 @@ export default function AdminPage() {
           </h1>
 
           {/* タブ */}
-          <div className="flex gap-2 mb-6 border-b">
+          <div className="flex gap-2 mb-6 border-b overflow-x-auto">
             <button
               onClick={() => setActiveTab("results")}
-              className={`px-6 py-3 font-semibold transition ${
+              className={`px-6 py-3 font-semibold transition whitespace-nowrap ${
                 activeTab === "results"
                   ? "border-b-2 border-blue-600 text-blue-600"
                   : "text-gray-600 hover:text-gray-800"
@@ -168,8 +180,28 @@ export default function AdminPage() {
               集計結果
             </button>
             <button
+              onClick={() => setActiveTab("ranking")}
+              className={`px-6 py-3 font-semibold transition whitespace-nowrap ${
+                activeTab === "ranking"
+                  ? "border-b-2 border-blue-600 text-blue-600"
+                  : "text-gray-600 hover:text-gray-800"
+              }`}
+            >
+              ランキング
+            </button>
+            <button
+              onClick={() => setActiveTab("comments")}
+              className={`px-6 py-3 font-semibold transition whitespace-nowrap ${
+                activeTab === "comments"
+                  ? "border-b-2 border-blue-600 text-blue-600"
+                  : "text-gray-600 hover:text-gray-800"
+              }`}
+            >
+              コメント一覧
+            </button>
+            <button
               onClick={() => setActiveTab("manage")}
-              className={`px-6 py-3 font-semibold transition ${
+              className={`px-6 py-3 font-semibold transition whitespace-nowrap ${
                 activeTab === "manage"
                   ? "border-b-2 border-blue-600 text-blue-600"
                   : "text-gray-600 hover:text-gray-800"
@@ -268,6 +300,136 @@ export default function AdminPage() {
                     );
                   })}
                 </div>
+              )}
+            </div>
+          )}
+
+          {/* ランキングタブ */}
+          {activeTab === "ranking" && (
+            <div className="space-y-6">
+              <h2 className="text-xl font-bold text-gray-800">ランキング</h2>
+
+              {/* 総合ランキング */}
+              <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-400 rounded-lg p-6">
+                <h3 className="text-lg font-bold text-gray-800 mb-4">🏆 総合ランキング</h3>
+                <div className="space-y-2">
+                  {teamRankings.map(({ team, totalScore, voteCount }, index) => (
+                    <div
+                      key={team}
+                      className={`flex items-center justify-between p-3 rounded-lg ${
+                        index === 0
+                          ? "bg-yellow-200 font-bold"
+                          : index === 1
+                          ? "bg-gray-200"
+                          : index === 2
+                          ? "bg-orange-100"
+                          : "bg-white"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl font-bold text-gray-600 w-8">
+                          {index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `${index + 1}.`}
+                        </span>
+                        <span className="text-lg font-semibold">Team {team}</span>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-xl font-bold text-blue-600">{totalScore.toFixed(1)}点</div>
+                        <div className="text-xs text-gray-500">({voteCount}票)</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 分野別ランキング */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {Object.entries(CRITERIA_LABELS).map(([criteriaId, label]) => {
+                  const criteriaRankings = teamRankings
+                    .map(({ team, scores }) => ({
+                      team,
+                      score: scores[criteriaId]?.total || 0,
+                      average: scores[criteriaId]?.average || 0,
+                      count: scores[criteriaId]?.count || 0,
+                    }))
+                    .sort((a, b) => b.score - a.score);
+
+                  return (
+                    <div key={criteriaId} className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <h4 className="font-bold text-gray-800 mb-3">{label}</h4>
+                      <div className="space-y-2">
+                        {criteriaRankings.slice(0, 5).map(({ team, score, average, count }, index) => (
+                          <div
+                            key={team}
+                            className={`flex items-center justify-between p-2 rounded ${
+                              index === 0 ? "bg-blue-200 font-semibold" : "bg-white"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-bold text-gray-600 w-6">
+                                {index + 1}.
+                              </span>
+                              <span className="text-sm">Team {team}</span>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-sm font-bold text-blue-600">
+                                {score.toFixed(1)}点
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                平均 {average.toFixed(2)}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* コメント一覧タブ */}
+          {activeTab === "comments" && (
+            <div className="space-y-6">
+              <h2 className="text-xl font-bold text-gray-800">コメント一覧</h2>
+
+              {results && Object.keys(results.teams).length > 0 ? (
+                <div className="space-y-6">
+                  {teamRankings.map(({ team }) => {
+                    // このチームへのコメントを収集
+                    const teamComments: Array<{ voterId: string; comment: string }> = [];
+                    if (results.voterScores) {
+                      Object.entries(results.voterScores).forEach(([voterId, voterData]) => {
+                        if (voterData[team]?.comment) {
+                          teamComments.push({
+                            voterId: voterId.substring(0, 20) + "...",
+                            comment: voterData[team].comment,
+                          });
+                        }
+                      });
+                    }
+
+                    return (
+                      <div key={team} className="border-2 border-gray-200 rounded-lg p-6">
+                        <h3 className="text-xl font-bold text-gray-800 mb-4">Team {team}</h3>
+                        {teamComments.length === 0 ? (
+                          <p className="text-gray-500 italic">コメントはありません</p>
+                        ) : (
+                          <div className="space-y-3">
+                            {teamComments.map((item, index) => (
+                              <div key={index} className="bg-gray-50 rounded-lg p-4">
+                                <p className="text-gray-800 whitespace-pre-wrap">{item.comment}</p>
+                                <p className="text-xs text-gray-400 mt-2">投票者ID: {item.voterId}</p>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-center text-gray-500">まだコメントがありません</p>
               )}
             </div>
           )}

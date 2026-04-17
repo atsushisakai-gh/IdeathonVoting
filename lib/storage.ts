@@ -10,16 +10,21 @@ interface TeamScores {
   [criteriaId: string]: CriteriaScore;
 }
 
+interface VoterTeamData {
+  scores: {
+    [criteriaId: string]: number;
+  };
+  comment?: string;
+}
+
 interface VoteData {
   teams: {
     [team: string]: TeamScores;
   };
-  // 投票者ごとの投票記録（voterId -> team -> criteriaId -> score）
+  // 投票者ごとの投票記録（voterId -> team -> { scores, comment }）
   voterScores: {
     [voterId: string]: {
-      [team: string]: {
-        [criteriaId: string]: number;
-      };
+      [team: string]: VoterTeamData;
     };
   };
 }
@@ -52,7 +57,8 @@ export async function getVotes(): Promise<VoteData> {
 export async function addVote(
   team: string,
   teamScores: Record<string, number>,
-  voterId: string
+  voterId: string,
+  comment?: string
 ): Promise<void> {
   const votes = await getVotes();
 
@@ -65,22 +71,21 @@ export async function addVote(
   if (!votes.voterScores[voterId]) {
     votes.voterScores[voterId] = {};
   }
-  if (!votes.voterScores[voterId][team]) {
-    votes.voterScores[voterId][team] = {};
-  }
 
   // 以前の投票があれば、それを引く（再投票の場合）
   const previousVote = votes.voterScores[voterId][team];
-  Object.entries(previousVote).forEach(([criteriaId, oldScore]) => {
-    if (votes.teams[team][criteriaId]) {
-      const criteria = votes.teams[team][criteriaId];
-      criteria.total -= oldScore;
-      criteria.count -= 1;
-      if (criteria.count > 0) {
-        criteria.average = criteria.total / criteria.count;
+  if (previousVote?.scores) {
+    Object.entries(previousVote.scores).forEach(([criteriaId, oldScore]) => {
+      if (votes.teams[team][criteriaId]) {
+        const criteria = votes.teams[team][criteriaId];
+        criteria.total -= oldScore;
+        criteria.count -= 1;
+        if (criteria.count > 0) {
+          criteria.average = criteria.total / criteria.count;
+        }
       }
-    }
-  });
+    });
+  }
 
   // 新しいスコアを加算
   Object.entries(teamScores).forEach(([criteriaId, score]) => {
@@ -99,7 +104,10 @@ export async function addVote(
   });
 
   // 投票者の記録を更新
-  votes.voterScores[voterId][team] = teamScores;
+  votes.voterScores[voterId][team] = {
+    scores: teamScores,
+    comment: comment || undefined,
+  };
 
   if (isKVAvailable()) {
     try {

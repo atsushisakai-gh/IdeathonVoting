@@ -19,6 +19,10 @@ type Scores = {
   [team: string]: TeamScore;
 };
 
+type Comments = {
+  [team: string]: string;
+};
+
 type VotedTeams = {
   [team: string]: boolean;
 };
@@ -36,6 +40,7 @@ const getVoterId = (): string => {
 
 export default function VotingPage() {
   const [scores, setScores] = useState<Scores>({});
+  const [comments, setComments] = useState<Comments>({});
   const [votedTeams, setVotedTeams] = useState<VotedTeams>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
@@ -55,15 +60,18 @@ export default function VotingPage() {
     });
     setVotedTeams(voted);
 
-    // スコアの初期化
+    // スコアとコメントの初期化
     const initialScores: Scores = {};
+    const initialComments: Comments = {};
     TEAMS.forEach(team => {
       initialScores[team] = {};
+      initialComments[team] = "";
       CRITERIA.forEach(criteria => {
         initialScores[team][criteria.id] = 0;
       });
     });
     setScores(initialScores);
+    setComments(initialComments);
 
     // 未投票のチームを探して表示
     const firstUnvotedIndex = TEAMS.findIndex(t => !voted[t]);
@@ -79,6 +87,13 @@ export default function VotingPage() {
         ...prev[team],
         [criteriaId]: score,
       },
+    }));
+  };
+
+  const handleCommentChange = (team: string, comment: string) => {
+    setComments(prev => ({
+      ...prev,
+      [team]: comment,
     }));
   };
 
@@ -137,7 +152,8 @@ export default function VotingPage() {
         body: JSON.stringify({
           team,
           scores: scores[team],
-          voterId
+          voterId,
+          comment: comments[team] || undefined
         }),
       });
 
@@ -252,6 +268,24 @@ export default function VotingPage() {
                     </div>
                   </div>
                 ))}
+              </div>
+
+              {/* コメント入力欄 */}
+              <div className="mt-6">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  コメント（任意）
+                </label>
+                <textarea
+                  value={comments[team] || ""}
+                  onChange={(e) => handleCommentChange(team, e.target.value)}
+                  placeholder="このチームへのコメントや感想を入力できます"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  rows={3}
+                  maxLength={500}
+                />
+                <p className="text-xs text-gray-500 mt-1 text-right">
+                  {comments[team]?.length || 0} / 500文字
+                </p>
               </div>
             </div>
 
