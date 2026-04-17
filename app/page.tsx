@@ -124,6 +124,16 @@ export default function VotingPage() {
     }
   };
 
+  const handleChangeMyTeam = () => {
+    if (!confirm("所属チームを変更しますか？\n※投票済みのデータは保持されます")) {
+      return;
+    }
+
+    setIsSelectingTeam(true);
+    setMyTeam(null);
+    localStorage.removeItem("myTeam");
+  };
+
   const allTeamsVoted = () => {
     // 自分のチーム以外すべてに投票済みか
     return TEAMS.filter(t => t !== myTeam).every(team => votedTeams[team]);
@@ -223,12 +233,30 @@ export default function VotingPage() {
     <div className="min-h-screen py-8 px-4 bg-gray-50">
       <div className="max-w-4xl mx-auto">
         <div className="bg-white rounded-lg shadow-lg p-6 md:p-8">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2 text-center">
-            社内AIアイデアソン投票
-          </h1>
-          <p className="text-gray-600 mb-6 text-center text-sm md:text-base">
-            各チームを4つの観点で1~5点で評価してください
-          </p>
+          <div className="flex justify-between items-start mb-4">
+            <div className="flex-1">
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2 text-center">
+                社内AIアイデアソン投票
+              </h1>
+              <p className="text-gray-600 mb-2 text-center text-sm md:text-base">
+                各チームを4つの観点で1~5点で評価してください
+              </p>
+            </div>
+          </div>
+
+          <div className="flex justify-center mb-4">
+            <div className="bg-blue-50 px-4 py-2 rounded-lg border border-blue-200 flex items-center gap-3">
+              <span className="text-sm text-gray-700">
+                あなたのチーム: <span className="font-bold text-blue-700">Team {myTeam}</span>
+              </span>
+              <button
+                onClick={handleChangeMyTeam}
+                className="text-xs px-3 py-1 bg-white border border-gray-300 rounded hover:bg-gray-50 transition"
+              >
+                変更
+              </button>
+            </div>
+          </div>
 
           {/* チーム選択タブ */}
           <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
