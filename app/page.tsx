@@ -197,30 +197,57 @@ export default function VotingPage() {
   // チーム選択画面
   if (isSelectingTeam) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50">
-        <div className="max-w-2xl w-full bg-white rounded-lg shadow-lg p-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2 text-center">
-            社内AIアイデアソン投票
-          </h1>
-          <p className="text-gray-600 mb-8 text-center">
-            まず、あなたの所属チームを選択してください
-          </p>
+      <div className="min-h-screen flex items-center justify-center p-4 relative z-10">
+        <div className="max-w-2xl w-full animate-scale-in">
+          <div className="card-neon p-10">
+            <div className="text-center mb-10">
+              <h1 className="text-5xl font-bold mb-4 glow-text" style={{ color: 'var(--color-neon-cyan)' }}>
+                社内AIアイデアソン投票
+              </h1>
+              <p className="text-[var(--color-text-secondary)] text-lg">
+                まず、あなたの所属チームを選択してください
+              </p>
+            </div>
 
-          <div className="space-y-3">
-            {TEAMS.map((t) => (
-              <button
-                key={t}
-                onClick={() => handleSelectMyTeam(t)}
-                className="w-full p-4 border-2 border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition text-left"
-              >
-                <span className="text-xl font-semibold text-gray-800">Team {t}</span>
-              </button>
-            ))}
+            <div className="space-y-3">
+              {TEAMS.map((t, index) => (
+                <button
+                  key={t}
+                  onClick={() => handleSelectMyTeam(t)}
+                  className="w-full p-5 rounded-xl font-semibold text-xl transition-all group relative overflow-hidden"
+                  style={{
+                    background: 'var(--color-dark-surface)',
+                    border: '2px solid rgba(0, 245, 255, 0.2)',
+                    color: 'var(--color-text-primary)',
+                    animationDelay: `${index * 0.1}s`,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--color-neon-cyan)';
+                    e.currentTarget.style.boxShadow = 'var(--shadow-glow-cyan)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(0, 245, 255, 0.2)';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="group-hover:translate-x-2 transition-transform">
+                      Team {t}
+                    </span>
+                    <span className="text-[var(--color-neon-cyan)] opacity-0 group-hover:opacity-100 transition-opacity">
+                      →
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-8 text-center">
+              <p className="text-[var(--color-text-muted)] text-sm">
+                ※ 自分のチームには投票できません
+              </p>
+            </div>
           </div>
-
-          <p className="text-sm text-gray-500 mt-6 text-center">
-            ※自分のチームには投票できません
-          </p>
         </div>
       </div>
     );
@@ -230,28 +257,36 @@ export default function VotingPage() {
   const isMyTeam = team === myTeam;
 
   return (
-    <div className="min-h-screen py-8 px-4 bg-gray-50">
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-lg shadow-lg p-6 md:p-8">
-          <div className="flex justify-between items-start mb-4">
+    <div className="min-h-screen py-8 px-4 relative z-10">
+      <div className="max-w-4xl mx-auto animate-fade-in">
+        <div className="card-neon p-6 md:p-8">
+          <div className="flex justify-between items-start mb-6">
             <div className="flex-1">
-              <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2 text-center">
+              <h1 className="text-3xl md:text-4xl font-bold mb-3 text-center glow-text" style={{ color: 'var(--color-neon-cyan)' }}>
                 社内AIアイデアソン投票
               </h1>
-              <p className="text-gray-600 mb-2 text-center text-sm md:text-base">
+              <p className="text-[var(--color-text-secondary)] mb-2 text-center text-sm md:text-base">
                 各チームを4つの観点で1~5点で評価してください
               </p>
             </div>
           </div>
 
-          <div className="flex justify-center mb-4">
-            <div className="bg-blue-50 px-4 py-2 rounded-lg border border-blue-200 flex items-center gap-3">
-              <span className="text-sm text-gray-700">
-                あなたのチーム: <span className="font-bold text-blue-700">Team {myTeam}</span>
+          <div className="flex justify-center mb-6">
+            <div className="px-5 py-3 rounded-xl border flex items-center gap-3" style={{
+              background: 'var(--color-dark-surface)',
+              borderColor: 'rgba(0, 245, 255, 0.3)',
+            }}>
+              <span className="text-sm text-[var(--color-text-secondary)]">
+                あなたのチーム: <span className="font-bold glow-text" style={{ color: 'var(--color-neon-yellow)' }}>Team {myTeam}</span>
               </span>
               <button
                 onClick={handleChangeMyTeam}
-                className="text-xs px-3 py-1 bg-white border border-gray-300 rounded hover:bg-gray-50 transition"
+                className="text-xs px-3 py-1 rounded-lg border transition-all hover:border-[var(--color-neon-cyan)] hover:text-[var(--color-neon-cyan)]"
+                style={{
+                  background: 'var(--color-dark-base)',
+                  borderColor: 'rgba(0, 245, 255, 0.2)',
+                  color: 'var(--color-text-secondary)',
+                }}
               >
                 変更
               </button>
@@ -259,77 +294,89 @@ export default function VotingPage() {
           </div>
 
           {/* チーム選択タブ */}
-          <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+          <div className="flex gap-3 mb-8 overflow-x-auto pb-2">
             {TEAMS.map((t, index) => (
               <button
                 key={t}
                 onClick={() => setCurrentTeam(index)}
-                className={`px-4 py-2 rounded-lg font-semibold transition whitespace-nowrap ${
+                className={`team-tab whitespace-nowrap ${
                   currentTeam === index
-                    ? "bg-blue-600 text-white"
+                    ? "active"
                     : t === myTeam
-                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    ? "my-team"
                     : votedTeams[t]
-                    ? "bg-green-100 text-green-800 border-2 border-green-500"
-                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    ? "voted"
+                    : ""
                 }`}
               >
-                Team {t}
-                {t === myTeam && " (あなたのチーム)"}
-                {votedTeams[t] && currentTeam !== index && " ✓"}
+                <span className="flex items-center gap-2">
+                  Team {t}
+                  {t === myTeam && <span className="text-xs">(あなたのチーム)</span>}
+                  {votedTeams[t] && currentTeam !== index && <span className="text-[var(--color-neon-green)]">✓</span>}
+                </span>
               </button>
             ))}
           </div>
 
           <div className="space-y-6">
             {isMyTeam ? (
-              <div className="bg-gray-100 border-2 border-gray-400 rounded-lg p-8 text-center">
-                <div className="text-6xl mb-4">🚫</div>
-                <h2 className="text-2xl font-bold text-gray-700 mb-2">
+              <div className="rounded-2xl p-10 text-center border-2 animate-slide-up" style={{
+                background: 'var(--color-dark-surface)',
+                borderColor: 'rgba(255, 0, 110, 0.3)',
+              }}>
+                <div className="text-7xl mb-6" style={{ filter: 'drop-shadow(0 0 10px rgba(255, 0, 110, 0.5))' }}>🚫</div>
+                <h2 className="text-3xl font-bold mb-3 glow-text" style={{ color: 'var(--color-neon-magenta)' }}>
                   Team {team} (あなたのチーム)
                 </h2>
-                <p className="text-gray-600">
+                <p className="text-[var(--color-text-secondary)] text-lg">
                   自分のチームには投票できません
                 </p>
               </div>
             ) : (
               <>
-                <div className={`rounded-lg p-6 ${votedTeams[team] ? "bg-green-50 border-2 border-green-500" : "bg-blue-50"}`}>
-                  <div className="flex items-center justify-center gap-3 mb-6">
-                    {votedTeams[team] && <span className="text-3xl">✓</span>}
-                    <h2 className="text-2xl font-bold text-center" style={{ color: votedTeams[team] ? "#166534" : "#1e3a8a" }}>
+                <div className="rounded-2xl p-6 border-2 animate-slide-up" style={{
+                  background: votedTeams[team] ? 'rgba(0, 255, 136, 0.05)' : 'var(--color-dark-surface)',
+                  borderColor: votedTeams[team] ? 'var(--color-neon-green)' : 'rgba(0, 245, 255, 0.2)',
+                }}>
+                  <div className="flex items-center justify-center gap-4 mb-6">
+                    {votedTeams[team] && (
+                      <span className="text-4xl glow-text" style={{ color: 'var(--color-neon-green)' }}>✓</span>
+                    )}
+                    <h2 className="text-3xl font-bold text-center glow-text" style={{
+                      color: votedTeams[team] ? 'var(--color-neon-green)' : 'var(--color-neon-cyan)'
+                    }}>
                       Team {team}
-                      {votedTeams[team] && <span className="text-base ml-2 font-normal">(投票済み)</span>}
+                      {votedTeams[team] && <span className="text-base ml-3 font-normal text-[var(--color-text-secondary)]">(投票済み)</span>}
                     </h2>
                   </div>
 
                   {votedTeams[team] && (
-                    <p className="text-center text-green-700 mb-4 text-sm">
+                    <p className="text-center text-[var(--color-neon-green)] mb-6 text-sm">
                       評価を変更して再投票できます
                     </p>
                   )}
 
-              <div className="space-y-6">
-                {CRITERIA.map((criteria) => (
-                  <div key={criteria.id} className="bg-white rounded-lg p-4 shadow-sm">
-                    <div className="mb-3">
-                      <h3 className="font-semibold text-gray-800 text-lg">
+              <div className="space-y-5">
+                {CRITERIA.map((criteria, idx) => (
+                  <div key={criteria.id} className="rounded-xl p-5" style={{
+                    background: 'var(--color-dark-base)',
+                    border: '1px solid rgba(0, 245, 255, 0.1)',
+                    animationDelay: `${idx * 0.1}s`
+                  }}>
+                    <div className="mb-4">
+                      <h3 className="font-bold text-[var(--color-text-primary)] text-lg mb-1">
                         {criteria.label}
                       </h3>
-                      <p className="text-sm text-gray-600">{criteria.description}</p>
+                      <p className="text-sm text-[var(--color-text-muted)]">{criteria.description}</p>
                     </div>
 
-                    <div className="flex gap-2 justify-center">
+                    <div className="flex gap-3 justify-center">
                       {[1, 2, 3, 4, 5].map((score) => (
                         <button
                           key={score}
                           type="button"
                           onClick={() => handleScoreChange(team, criteria.id, score)}
-                          className={`w-12 h-12 rounded-lg font-bold text-lg transition ${
-                            scores[team]?.[criteria.id] === score
-                              ? "bg-blue-600 text-white shadow-lg scale-110"
-                              : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                          }`}
+                          className={`score-button ${scores[team]?.[criteria.id] === score ? 'selected' : ''}`}
                         >
                           {score}
                         </button>
@@ -341,18 +388,18 @@ export default function VotingPage() {
 
               {/* コメント入力欄 */}
               <div className="mt-6">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-[var(--color-text-primary)] mb-3">
                   コメント（任意）
                 </label>
                 <textarea
                   value={comments[team] || ""}
                   onChange={(e) => handleCommentChange(team, e.target.value)}
                   placeholder="このチームへのコメントや感想を入力できます"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  className="input-neon resize-none"
                   rows={3}
                   maxLength={500}
                 />
-                <p className="text-xs text-gray-500 mt-1 text-right">
+                <p className="text-xs text-[var(--color-text-muted)] mt-2 text-right">
                   {comments[team]?.length || 0} / 500文字
                 </p>
               </div>
@@ -362,11 +409,12 @@ export default function VotingPage() {
                 <button
                   onClick={() => handleSubmitTeam(team)}
                   disabled={isSubmitting || !isTeamComplete(team)}
-                  className={`w-full py-4 text-white text-lg rounded-lg font-semibold transition disabled:bg-gray-400 disabled:cursor-not-allowed ${
-                    votedTeams[team]
-                      ? "bg-orange-600 hover:bg-orange-700"
-                      : "bg-green-600 hover:bg-green-700"
-                  }`}
+                  className="btn-primary w-full py-4 text-xl"
+                  style={{
+                    background: votedTeams[team]
+                      ? 'linear-gradient(135deg, var(--color-neon-yellow) 0%, var(--color-neon-magenta) 100%)'
+                      : 'var(--gradient-primary)'
+                  }}
                 >
                   {isSubmitting
                     ? "送信中..."
@@ -379,7 +427,7 @@ export default function VotingPage() {
             )}
 
             {/* ナビゲーションボタン */}
-            <div className="flex gap-4 justify-between">
+            <div className="flex gap-4 justify-between mt-6">
               <button
                 type="button"
                 onClick={() => {
@@ -393,7 +441,22 @@ export default function VotingPage() {
                   }
                 }}
                 disabled={currentTeam === 0 || (currentTeam === 1 && TEAMS[0] === myTeam)}
-                className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-3 rounded-xl font-semibold transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                style={{
+                  background: 'var(--color-dark-surface)',
+                  color: 'var(--color-text-secondary)',
+                  border: '2px solid rgba(0, 245, 255, 0.2)',
+                }}
+                onMouseEnter={(e) => {
+                  if (!e.currentTarget.disabled) {
+                    e.currentTarget.style.borderColor = 'var(--color-neon-cyan)';
+                    e.currentTarget.style.color = 'var(--color-neon-cyan)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'rgba(0, 245, 255, 0.2)';
+                  e.currentTarget.style.color = 'var(--color-text-secondary)';
+                }}
               >
                 ← 前のチーム
               </button>
@@ -411,16 +474,31 @@ export default function VotingPage() {
                   }
                 }}
                 disabled={currentTeam === TEAMS.length - 1 || (currentTeam === TEAMS.length - 2 && TEAMS[TEAMS.length - 1] === myTeam)}
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-3 rounded-xl font-semibold transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                style={{
+                  background: 'var(--gradient-primary)',
+                  color: 'white',
+                }}
               >
                 次のチーム →
               </button>
             </div>
 
             {message && (
-              <p className={`text-center font-medium ${message.includes("エラー") || message.includes("すべて") ? "text-red-600" : "text-green-600"}`}>
+              <div className={`text-center font-semibold p-4 rounded-xl mt-4 animate-slide-up`} style={{
+                background: message.includes("エラー") || message.includes("すべて")
+                  ? 'rgba(255, 0, 110, 0.1)'
+                  : 'rgba(0, 255, 136, 0.1)',
+                color: message.includes("エラー") || message.includes("すべて")
+                  ? 'var(--color-neon-magenta)'
+                  : 'var(--color-neon-green)',
+                border: '2px solid',
+                borderColor: message.includes("エラー") || message.includes("すべて")
+                  ? 'var(--color-neon-magenta)'
+                  : 'var(--color-neon-green)',
+              }}>
                 {message}
-              </p>
+              </div>
             )}
           </div>
         </div>

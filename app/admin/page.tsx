@@ -153,43 +153,50 @@ export default function AdminPage() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
-          <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">
-            管理者ページ
-          </h1>
+      <div className="min-h-screen flex items-center justify-center p-4 relative z-10">
+        <div className="max-w-md w-full animate-scale-in">
+          <div className="card-neon p-10">
+            <h1 className="text-4xl font-bold mb-8 text-center glow-text" style={{ color: 'var(--color-neon-magenta)' }}>
+              管理者ページ
+            </h1>
 
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                パスワード
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="管理者パスワードを入力"
-                required
-              />
+            <form onSubmit={handleLogin} className="space-y-6">
+              <div>
+                <label className="block text-sm font-semibold text-[var(--color-text-primary)] mb-3">
+                  パスワード
+                </label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="input-neon"
+                  placeholder="管理者パスワードを入力"
+                  required
+                />
+              </div>
+
+              {message && (
+                <p className="text-[var(--color-neon-magenta)] text-sm p-3 rounded-lg" style={{
+                  background: 'rgba(255, 0, 110, 0.1)',
+                  border: '1px solid var(--color-neon-magenta)',
+                }}>
+                  {message}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                className="btn-primary w-full py-3 text-lg"
+              >
+                ログイン
+              </button>
+            </form>
+
+            <div className="mt-8 text-center">
+              <a href="/" className="text-[var(--color-neon-cyan)] hover:glow-text transition text-sm">
+                投票画面に戻る →
+              </a>
             </div>
-
-            {message && (
-              <p className="text-red-600 text-sm">{message}</p>
-            )}
-
-            <button
-              type="submit"
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-blue-700 transition"
-            >
-              ログイン
-            </button>
-          </form>
-
-          <div className="mt-6 text-center">
-            <a href="/" className="text-blue-600 hover:text-blue-800 underline text-sm">
-              投票画面に戻る
-            </a>
           </div>
         </div>
       </div>

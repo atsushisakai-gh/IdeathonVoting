@@ -1,3 +1,272 @@
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  /* Colors - Neon Tech Palette */
+  --color-dark-base: #0a0e27;
+  --color-dark-elevated: #151932;
+  --color-dark-surface: #1e2442;
+
+  --color-neon-cyan: #00f5ff;
+  --color-neon-magenta: #ff006e;
+  --color-neon-yellow: #ffbe0b;
+  --color-neon-green: #00ff88;
+
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #a0a8c9;
+  --color-text-muted: #6b7399;
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, var(--color-neon-cyan) 0%, var(--color-neon-magenta) 100%);
+  --gradient-glow: radial-gradient(circle at center, rgba(0, 245, 255, 0.2) 0%, transparent 70%);
+
+  /* Shadows */
+  --shadow-glow-cyan: 0 0 20px rgba(0, 245, 255, 0.3);
+  --shadow-glow-magenta: 0 0 20px rgba(255, 0, 110, 0.3);
+  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.4);
+}
+
+@layer base {
+  body {
+    @apply bg-[var(--color-dark-base)] text-[var(--color-text-primary)];
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* Grid background pattern */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image:
+      linear-gradient(var(--color-neon-cyan) 1px, transparent 1px),
+      linear-gradient(90deg, var(--color-neon-cyan) 1px, transparent 1px);
+    background-size: 50px 50px;
+    opacity: 0.03;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* Gradient orb background */
+  body::after {
+    content: '';
+    position: fixed;
+    top: -50%;
+    right: -20%;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(0, 245, 255, 0.08) 0%, transparent 60%);
+    z-index: 0;
+    pointer-events: none;
+    animation: float 20s ease-in-out infinite;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+  }
+}
+
+@layer components {
+  .card-neon {
+    @apply bg-[var(--color-dark-elevated)] rounded-2xl p-6;
+    border: 1px solid rgba(0, 245, 255, 0.1);
+    box-shadow: var(--shadow-card);
+    position: relative;
+    transition: all 0.3s ease;
+  }
+
+  .card-neon:hover {
+    border-color: rgba(0, 245, 255, 0.3);
+    box-shadow: var(--shadow-card), var(--shadow-glow-cyan);
+    transform: translateY(-2px);
+  }
+
+  .btn-primary {
+    @apply px-6 py-3 rounded-xl font-semibold;
+    background: var(--gradient-primary);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 16px rgba(0, 245, 255, 0.3);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-primary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+  }
+
+  .btn-primary:hover::before {
+    left: 100%;
+  }
+
+  .btn-primary:hover {
+    box-shadow: 0 6px 24px rgba(0, 245, 255, 0.5);
+    transform: translateY(-2px);
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
+  .score-button {
+    @apply w-14 h-14 rounded-xl font-bold text-lg;
+    background: var(--color-dark-surface);
+    color: var(--color-text-secondary);
+    border: 2px solid rgba(0, 245, 255, 0.1);
+    transition: all 0.2s ease;
+    position: relative;
+  }
+
+  .score-button:hover {
+    border-color: var(--color-neon-cyan);
+    color: var(--color-neon-cyan);
+    transform: scale(1.05);
+  }
+
+  .score-button.selected {
+    background: var(--gradient-primary);
+    color: white;
+    border-color: transparent;
+    box-shadow: var(--shadow-glow-cyan);
+    transform: scale(1.1);
+  }
+
+  .team-tab {
+    @apply px-5 py-3 rounded-lg font-semibold transition-all;
+    background: var(--color-dark-surface);
+    color: var(--color-text-secondary);
+    border: 2px solid transparent;
+  }
+
+  .team-tab.active {
+    background: var(--gradient-primary);
+    color: white;
+    box-shadow: var(--shadow-glow-cyan);
+  }
+
+  .team-tab.voted {
+    background: var(--color-dark-elevated);
+    border-color: var(--color-neon-green);
+    color: var(--color-neon-green);
+  }
+
+  .team-tab.my-team {
+    background: var(--color-dark-surface);
+    color: var(--color-text-muted);
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .input-neon {
+    @apply w-full px-4 py-3 rounded-xl;
+    background: var(--color-dark-surface);
+    color: var(--color-text-primary);
+    border: 2px solid rgba(0, 245, 255, 0.1);
+    transition: all 0.3s ease;
+  }
+
+  .input-neon:focus {
+    outline: none;
+    border-color: var(--color-neon-cyan);
+    box-shadow: var(--shadow-glow-cyan);
+  }
+
+  .glow-text {
+    text-shadow: 0 0 10px currentColor;
+  }
+}
+
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.6s ease-out forwards;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.4s ease-out forwards;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  33% {
+    transform: translate(30px, -30px) rotate(5deg);
+  }
+  66% {
+    transform: translate(-20px, 20px) rotate(-5deg);
+  }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-dark-base);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-dark-surface);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-neon-cyan);
+  box-shadow: var(--shadow-glow-cyan);
+}
