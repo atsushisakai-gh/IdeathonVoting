@@ -23,14 +23,30 @@ type VotedTeams = {
   [team: string]: boolean;
 };
 
+// 投票者IDを生成または取得
+const getVoterId = (): string => {
+  let voterId = localStorage.getItem("voterId");
+  if (!voterId) {
+    // UUID風のランダムIDを生成
+    voterId = `voter_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+    localStorage.setItem("voterId", voterId);
+  }
+  return voterId;
+};
+
 export default function VotingPage() {
   const [scores, setScores] = useState<Scores>({});
   const [votedTeams, setVotedTeams] = useState<VotedTeams>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [currentTeam, setCurrentTeam] = useState(0);
+  const [voterId, setVoterId] = useState("");
 
   useEffect(() => {
+    // 投票者IDを取得
+    const id = getVoterId();
+    setVoterId(id);
+
     // 投票済みチームをlocalStorageから読み込み
     const voted: VotedTeams = {};
     TEAMS.forEach(team => {
@@ -75,7 +91,7 @@ export default function VotingPage() {
   };
 
   const handleResetAllVotes = () => {
-    if (!confirm("すべての投票をリセットしますか？（サーバーのデータは削除されません）")) {
+    if (!confirm("すべての投票をリセットしますか？（新しい投票者IDが発行されます）")) {
       return;
     }
 
@@ -83,6 +99,11 @@ export default function VotingPage() {
     TEAMS.forEach(team => {
       localStorage.removeItem(`voted_${team}`);
     });
+    localStorage.removeItem("voterId");
+
+    // 新しい投票者IDを生成
+    const newVoterId = getVoterId();
+    setVoterId(newVoterId);
 
     // 状態をリセット
     const resetVoted: VotedTeams = {};
@@ -93,11 +114,11 @@ export default function VotingPage() {
 
     // 最初のチームに戻る
     setCurrentTeam(0);
-    setMessage("投票をリセットしました");
+    setMessage("投票をリセットしました（新しい投票者として記録されます）");
 
     setTimeout(() => {
       setMessage("");
-    }, 2000);
+    }, 3000);
   };
 
   const handleSubmitTeam = async (team: string) => {
@@ -115,7 +136,8 @@ export default function VotingPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           team,
-          scores: scores[team]
+          scores: scores[team],
+          voterId
         }),
       });
 
@@ -288,7 +310,7 @@ export default function VotingPage() {
                   すべての投票をリセット
                 </button>
                 <p className="text-xs text-gray-500 text-center mt-2">
-                  ※ローカルの投票済み状態のみリセットされます
+                  ※新しい投票者として最初から投票し直せます
                 </p>
               </div>
             )}

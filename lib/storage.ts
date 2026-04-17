@@ -14,11 +14,20 @@ interface VoteData {
   teams: {
     [team: string]: TeamScores;
   };
+  // 投票者ごとの投票記録（voterId -> team -> criteriaId -> score）
+  voterScores: {
+    [voterId: string]: {
+      [team: string]: {
+        [criteriaId: string]: number;
+      };
+    };
+  };
 }
 
 // メモリストレージ（開発環境用のフォールバック）
 let memoryStorage: VoteData = {
   teams: {},
+  voterScores: {},
 };
 
 // Vercel KVが利用可能かチェック
@@ -30,7 +39,7 @@ export async function getVotes(): Promise<VoteData> {
   if (isKVAvailable()) {
     try {
       const votes = await kv.get<VoteData>("votes");
-      return votes || { teams: {} };
+      return votes || { teams: {}, voterScores: {} };
     } catch (error) {
       console.error("Failed to get votes from KV:", error);
       return memoryStorage;
@@ -40,7 +49,11 @@ export async function getVotes(): Promise<VoteData> {
   return memoryStorage;
 }
 
-export async function addVote(team: string, teamScores: Record<string, number>): Promise<void> {
+export async function addVote(
+  team: string,
+  teamScores: Record<string, number>,
+  voterId: string
+): Promise<void> {
   const votes = await getVotes();
 
   // チームのデータを初期化（まだない場合）
@@ -48,7 +61,28 @@ export async function addVote(team: string, teamScores: Record<string, number>):
     votes.teams[team] = {};
   }
 
-  // 各観点のスコアを集計
+  // 投票者のデータを初期化
+  if (!votes.voterScores[voterId]) {
+    votes.voterScores[voterId] = {};
+  }
+  if (!votes.voterScores[voterId][team]) {
+    votes.voterScores[voterId][team] = {};
+  }
+
+  // 以前の投票があれば、それを引く（再投票の場合）
+  const previousVote = votes.voterScores[voterId][team];
+  Object.entries(previousVote).forEach(([criteriaId, oldScore]) => {
+    if (votes.teams[team][criteriaId]) {
+      const criteria = votes.teams[team][criteriaId];
+      criteria.total -= oldScore;
+      criteria.count -= 1;
+      if (criteria.count > 0) {
+        criteria.average = criteria.total / criteria.count;
+      }
+    }
+  });
+
+  // 新しいスコアを加算
   Object.entries(teamScores).forEach(([criteriaId, score]) => {
     if (!votes.teams[team][criteriaId]) {
       votes.teams[team][criteriaId] = {
@@ -64,6 +98,9 @@ export async function addVote(team: string, teamScores: Record<string, number>):
     criteria.average = criteria.total / criteria.count;
   });
 
+  // 投票者の記録を更新
+  votes.voterScores[voterId][team] = teamScores;
+
   if (isKVAvailable()) {
     try {
       await kv.set("votes", votes);
@@ -78,7 +115,7 @@ export async function addVote(team: string, teamScores: Record<string, number>):
 }
 
 export async function resetVotes(): Promise<void> {
-  const emptyVotes = { teams: {} };
+  const emptyVotes = { teams: {}, voterScores: {} };
 
   if (isKVAvailable()) {
     try {
