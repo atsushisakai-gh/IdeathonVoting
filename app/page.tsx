@@ -74,6 +74,32 @@ export default function VotingPage() {
     return TEAMS.every(team => votedTeams[team]);
   };
 
+  const handleResetAllVotes = () => {
+    if (!confirm("すべての投票をリセットしますか？（サーバーのデータは削除されません）")) {
+      return;
+    }
+
+    // localStorageをクリア
+    TEAMS.forEach(team => {
+      localStorage.removeItem(`voted_${team}`);
+    });
+
+    // 状態をリセット
+    const resetVoted: VotedTeams = {};
+    TEAMS.forEach(team => {
+      resetVoted[team] = false;
+    });
+    setVotedTeams(resetVoted);
+
+    // 最初のチームに戻る
+    setCurrentTeam(0);
+    setMessage("投票をリセットしました");
+
+    setTimeout(() => {
+      setMessage("");
+    }, 2000);
+  };
+
   const handleSubmitTeam = async (team: string) => {
     if (!isTeamComplete(team)) {
       setMessage("すべての観点を評価してください（1~5点で入力）");
@@ -97,18 +123,25 @@ export default function VotingPage() {
         // localStorageに保存
         localStorage.setItem(`voted_${team}`, "true");
         setVotedTeams(prev => ({ ...prev, [team]: true }));
-        setMessage(`Team ${team} への投票が完了しました！`);
 
-        // 次の未投票チームに移動
-        const nextUnvotedIndex = TEAMS.findIndex((t, i) =>
-          i > currentTeam && !votedTeams[t] && t !== team
+        const isRevote = votedTeams[team];
+        setMessage(isRevote
+          ? `Team ${team} への再投票が完了しました！`
+          : `Team ${team} への投票が完了しました！`
         );
 
-        if (nextUnvotedIndex !== -1) {
-          setTimeout(() => {
-            setCurrentTeam(nextUnvotedIndex);
-            setMessage("");
-          }, 1500);
+        // 次の未投票チームに移動（初回投票の場合のみ）
+        if (!isRevote) {
+          const nextUnvotedIndex = TEAMS.findIndex((t, i) =>
+            i > currentTeam && !votedTeams[t] && t !== team
+          );
+
+          if (nextUnvotedIndex !== -1) {
+            setTimeout(() => {
+              setCurrentTeam(nextUnvotedIndex);
+              setMessage("");
+            }, 1500);
+          }
         }
       } else {
         setMessage("エラーが発生しました。もう一度お試しください。");
@@ -119,18 +152,6 @@ export default function VotingPage() {
       setIsSubmitting(false);
     }
   };
-
-  if (allTeamsVoted()) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
-          <h1 className="text-3xl font-bold text-gray-800 mb-4">すべての投票完了</h1>
-          <p className="text-gray-600 mb-2">すべてのチームへの投票が完了しました！</p>
-          <p className="text-gray-600 mb-6">ご協力ありがとうございました。</p>
-        </div>
-      </div>
-    );
-  }
 
   const team = TEAMS[currentTeam];
 
@@ -166,64 +187,69 @@ export default function VotingPage() {
           </div>
 
           <div className="space-y-6">
-            {votedTeams[team] ? (
-              <div className="bg-green-50 border-2 border-green-500 rounded-lg p-8 text-center">
-                <div className="text-6xl mb-4">✓</div>
-                <h2 className="text-2xl font-bold text-green-800 mb-2">
-                  Team {team} への投票完了
+            <div className={`rounded-lg p-6 ${votedTeams[team] ? "bg-green-50 border-2 border-green-500" : "bg-blue-50"}`}>
+              <div className="flex items-center justify-center gap-3 mb-6">
+                {votedTeams[team] && <span className="text-3xl">✓</span>}
+                <h2 className="text-2xl font-bold text-center" style={{ color: votedTeams[team] ? "#166534" : "#1e3a8a" }}>
+                  Team {team}
+                  {votedTeams[team] && <span className="text-base ml-2 font-normal">(投票済み)</span>}
                 </h2>
-                <p className="text-green-700">
-                  このチームへの投票は完了しています
-                </p>
               </div>
-            ) : (
-              <>
-                <div className="bg-blue-50 rounded-lg p-6">
-                  <h2 className="text-2xl font-bold text-blue-900 mb-6 text-center">
-                    Team {team}
-                  </h2>
 
-                  <div className="space-y-6">
-                    {CRITERIA.map((criteria) => (
-                      <div key={criteria.id} className="bg-white rounded-lg p-4 shadow-sm">
-                        <div className="mb-3">
-                          <h3 className="font-semibold text-gray-800 text-lg">
-                            {criteria.label}
-                          </h3>
-                          <p className="text-sm text-gray-600">{criteria.description}</p>
-                        </div>
+              {votedTeams[team] && (
+                <p className="text-center text-green-700 mb-4 text-sm">
+                  評価を変更して再投票できます
+                </p>
+              )}
 
-                        <div className="flex gap-2 justify-center">
-                          {[1, 2, 3, 4, 5].map((score) => (
-                            <button
-                              key={score}
-                              type="button"
-                              onClick={() => handleScoreChange(team, criteria.id, score)}
-                              className={`w-12 h-12 rounded-lg font-bold text-lg transition ${
-                                scores[team]?.[criteria.id] === score
-                                  ? "bg-blue-600 text-white shadow-lg scale-110"
-                                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                              }`}
-                            >
-                              {score}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
+              <div className="space-y-6">
+                {CRITERIA.map((criteria) => (
+                  <div key={criteria.id} className="bg-white rounded-lg p-4 shadow-sm">
+                    <div className="mb-3">
+                      <h3 className="font-semibold text-gray-800 text-lg">
+                        {criteria.label}
+                      </h3>
+                      <p className="text-sm text-gray-600">{criteria.description}</p>
+                    </div>
+
+                    <div className="flex gap-2 justify-center">
+                      {[1, 2, 3, 4, 5].map((score) => (
+                        <button
+                          key={score}
+                          type="button"
+                          onClick={() => handleScoreChange(team, criteria.id, score)}
+                          className={`w-12 h-12 rounded-lg font-bold text-lg transition ${
+                            scores[team]?.[criteria.id] === score
+                              ? "bg-blue-600 text-white shadow-lg scale-110"
+                              : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                          }`}
+                        >
+                          {score}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                ))}
+              </div>
+            </div>
 
-                {/* このチームに投票ボタン */}
-                <button
-                  onClick={() => handleSubmitTeam(team)}
-                  disabled={isSubmitting || !isTeamComplete(team)}
-                  className="w-full py-4 bg-green-600 text-white text-lg rounded-lg font-semibold hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition"
-                >
-                  {isSubmitting ? "送信中..." : `Team ${team} に投票する`}
-                </button>
-              </>
-            )}
+            {/* このチームに投票ボタン */}
+            <button
+              onClick={() => handleSubmitTeam(team)}
+              disabled={isSubmitting || !isTeamComplete(team)}
+              className={`w-full py-4 text-white text-lg rounded-lg font-semibold transition disabled:bg-gray-400 disabled:cursor-not-allowed ${
+                votedTeams[team]
+                  ? "bg-orange-600 hover:bg-orange-700"
+                  : "bg-green-600 hover:bg-green-700"
+              }`}
+            >
+              {isSubmitting
+                ? "送信中..."
+                : votedTeams[team]
+                  ? `Team ${team} に再投票する`
+                  : `Team ${team} に投票する`
+              }
+            </button>
 
             {/* ナビゲーションボタン */}
             <div className="flex gap-4 justify-between">
@@ -250,6 +276,21 @@ export default function VotingPage() {
               <p className={`text-center font-medium ${message.includes("エラー") || message.includes("すべて") ? "text-red-600" : "text-green-600"}`}>
                 {message}
               </p>
+            )}
+
+            {/* すべての投票をリセットボタン */}
+            {allTeamsVoted() && (
+              <div className="pt-4 border-t">
+                <button
+                  onClick={handleResetAllVotes}
+                  className="w-full py-3 bg-gray-600 text-white rounded-lg font-semibold hover:bg-gray-700 transition"
+                >
+                  すべての投票をリセット
+                </button>
+                <p className="text-xs text-gray-500 text-center mt-2">
+                  ※ローカルの投票済み状態のみリセットされます
+                </p>
+              </div>
             )}
           </div>
         </div>
