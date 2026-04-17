@@ -105,37 +105,6 @@ export default function VotingPage() {
     return TEAMS.every(team => votedTeams[team]);
   };
 
-  const handleResetAllVotes = () => {
-    if (!confirm("すべての投票をリセットしますか？（新しい投票者IDが発行されます）")) {
-      return;
-    }
-
-    // localStorageをクリア
-    TEAMS.forEach(team => {
-      localStorage.removeItem(`voted_${team}`);
-    });
-    localStorage.removeItem("voterId");
-
-    // 新しい投票者IDを生成
-    const newVoterId = getVoterId();
-    setVoterId(newVoterId);
-
-    // 状態をリセット
-    const resetVoted: VotedTeams = {};
-    TEAMS.forEach(team => {
-      resetVoted[team] = false;
-    });
-    setVotedTeams(resetVoted);
-
-    // 最初のチームに戻る
-    setCurrentTeam(0);
-    setMessage("投票をリセットしました（新しい投票者として記録されます）");
-
-    setTimeout(() => {
-      setMessage("");
-    }, 3000);
-  };
-
   const handleSubmitTeam = async (team: string) => {
     if (!isTeamComplete(team)) {
       setMessage("すべての観点を評価してください（1~5点で入力）");
@@ -332,21 +301,6 @@ export default function VotingPage() {
               <p className={`text-center font-medium ${message.includes("エラー") || message.includes("すべて") ? "text-red-600" : "text-green-600"}`}>
                 {message}
               </p>
-            )}
-
-            {/* すべての投票をリセットボタン */}
-            {allTeamsVoted() && (
-              <div className="pt-4 border-t">
-                <button
-                  onClick={handleResetAllVotes}
-                  className="w-full py-3 bg-gray-600 text-white rounded-lg font-semibold hover:bg-gray-700 transition"
-                >
-                  すべての投票をリセット
-                </button>
-                <p className="text-xs text-gray-500 text-center mt-2">
-                  ※新しい投票者として最初から投票し直せます
-                </p>
-              </div>
             )}
           </div>
         </div>
