@@ -1,5 +1,4 @@
-// シンプルなストレージインターフェース
-// 開発環境ではメモリストレージ、本番環境ではVercel KVを使用
+import { kv } from "@vercel/kv";
 
 interface CriteriaScore {
   total: number;
@@ -17,17 +16,26 @@ interface VoteData {
   };
 }
 
-// メモリストレージ（開発用）
+// メモリストレージ（開発環境用のフォールバック）
 let memoryStorage: VoteData = {
   teams: {},
 };
 
+// Vercel KVが利用可能かチェック
+const isKVAvailable = () => {
+  return !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN);
+};
+
 export async function getVotes(): Promise<VoteData> {
-  // 本番環境でVercel KVを使う場合は以下のようにする
-  // if (process.env.KV_REST_API_URL) {
-  //   const kv = createClient({...});
-  //   return await kv.get('votes') || { teams: {} };
-  // }
+  if (isKVAvailable()) {
+    try {
+      const votes = await kv.get<VoteData>("votes");
+      return votes || { teams: {} };
+    } catch (error) {
+      console.error("Failed to get votes from KV:", error);
+      return memoryStorage;
+    }
+  }
 
   return memoryStorage;
 }
@@ -56,21 +64,29 @@ export async function addVote(team: string, teamScores: Record<string, number>):
     criteria.average = criteria.total / criteria.count;
   });
 
-  // 本番環境でVercel KVを使う場合
-  // if (process.env.KV_REST_API_URL) {
-  //   await kv.set('votes', votes);
-  // }
-
-  memoryStorage = votes;
+  if (isKVAvailable()) {
+    try {
+      await kv.set("votes", votes);
+    } catch (error) {
+      console.error("Failed to save votes to KV:", error);
+      // フォールバックとしてメモリに保存
+      memoryStorage = votes;
+    }
+  } else {
+    memoryStorage = votes;
+  }
 }
 
 export async function resetVotes(): Promise<void> {
-  memoryStorage = {
-    teams: {},
-  };
+  const emptyVotes = { teams: {} };
 
-  // 本番環境でVercel KVを使う場合
-  // if (process.env.KV_REST_API_URL) {
-  //   await kv.set('votes', { teams: {} });
-  // }
+  if (isKVAvailable()) {
+    try {
+      await kv.set("votes", emptyVotes);
+    } catch (error) {
+      console.error("Failed to reset votes in KV:", error);
+    }
+  }
+
+  memoryStorage = emptyVotes;
 }
