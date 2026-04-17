@@ -48,6 +48,28 @@ export default function AdminPage() {
   const [results, setResults] = useState<VoteResults | null>(null);
   const [resultsLoading, setResultsLoading] = useState(false);
 
+  // 認証状態の復元
+  useEffect(() => {
+    const adminAuth = localStorage.getItem("adminAuth");
+    if (adminAuth) {
+      try {
+        const { timestamp, password: savedPassword } = JSON.parse(adminAuth);
+        const adminPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || "admin2025";
+
+        // 24時間以内かつパスワードが一致する場合のみ認証を維持
+        const hoursSinceAuth = (Date.now() - timestamp) / (1000 * 60 * 60);
+        if (hoursSinceAuth < 24 && savedPassword === adminPassword) {
+          setIsAuthenticated(true);
+          fetchResults();
+        } else {
+          localStorage.removeItem("adminAuth");
+        }
+      } catch (error) {
+        localStorage.removeItem("adminAuth");
+      }
+    }
+  }, []);
+
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -57,10 +79,24 @@ export default function AdminPage() {
     if (password === adminPassword) {
       setIsAuthenticated(true);
       setMessage("");
+
+      // 認証状態を保存（24時間有効）
+      localStorage.setItem("adminAuth", JSON.stringify({
+        timestamp: Date.now(),
+        password: adminPassword
+      }));
+
       fetchResults();
     } else {
       setMessage("パスワードが正しくありません");
     }
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    localStorage.removeItem("adminAuth");
+    setPassword("");
+    setResults(null);
   };
 
   const fetchResults = async () => {
@@ -163,9 +199,17 @@ export default function AdminPage() {
     <div className="min-h-screen py-8 px-4 bg-gray-50">
       <div className="max-w-5xl mx-auto">
         <div className="bg-white rounded-lg shadow-lg p-6 md:p-8">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-6 text-center">
-            管理者ページ
-          </h1>
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
+              管理者ページ
+            </h1>
+            <button
+              onClick={handleLogout}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm font-semibold"
+            >
+              ログアウト
+            </button>
+          </div>
 
           {/* タブ */}
           <div className="flex gap-2 mb-6 border-b overflow-x-auto">
