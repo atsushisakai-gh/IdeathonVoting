@@ -1,12 +1,40 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
+const CRITERIA_LABELS = {
+  sharpness: "課題設定の鋭さ",
+  novelty: "アイデアの新規性",
+  feasibility: "実現可能性・事業性",
+  ai_creativity: "AI活用の創意工夫",
+};
+
+interface TeamScores {
+  [criteriaId: string]: {
+    total: number;
+    count: number;
+    average: number;
+  };
+}
+
+interface VoteResults {
+  teams: {
+    [team: string]: TeamScores;
+  };
+}
+
+type TabType = "results" | "manage";
 
 export default function AdminPage() {
   const [password, setPassword] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabType>("results");
+
+  // 結果表示用
+  const [results, setResults] = useState<VoteResults | null>(null);
+  const [resultsLoading, setResultsLoading] = useState(false);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,8 +45,22 @@ export default function AdminPage() {
     if (password === adminPassword) {
       setIsAuthenticated(true);
       setMessage("");
+      fetchResults();
     } else {
       setMessage("パスワードが正しくありません");
+    }
+  };
+
+  const fetchResults = async () => {
+    setResultsLoading(true);
+    try {
+      const response = await fetch("/api/results");
+      const data = await response.json();
+      setResults(data.results || { teams: {} });
+    } catch (error) {
+      console.error("Failed to fetch results:", error);
+    } finally {
+      setResultsLoading(false);
     }
   };
 
@@ -39,6 +81,7 @@ export default function AdminPage() {
 
       if (response.ok) {
         setMessage("すべての投票データをクリアしました");
+        fetchResults(); // 結果を再取得
       } else {
         const data = await response.json();
         setMessage(data.error || "エラーが発生しました");
@@ -95,55 +138,178 @@ export default function AdminPage() {
     );
   }
 
+  const teamRankings = results ? Object.entries(results.teams).map(([team, scores]) => {
+    const totalScore = Object.values(scores).reduce((sum, s) => sum + s.total, 0);
+    const averageScore = Object.values(scores).reduce((sum, s) => sum + s.average, 0);
+    const voteCount = Object.values(scores)[0]?.count || 0;
+    return { team, totalScore, averageScore, voteCount, scores };
+  }).sort((a, b) => b.totalScore - a.totalScore) : [];
+
+  const maxScore = teamRankings[0]?.totalScore || 1;
+
   return (
-    <div className="min-h-screen py-12 px-4 bg-gray-50">
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">
+    <div className="min-h-screen py-8 px-4 bg-gray-50">
+      <div className="max-w-5xl mx-auto">
+        <div className="bg-white rounded-lg shadow-lg p-6 md:p-8">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-6 text-center">
             管理者ページ
           </h1>
 
-          <div className="space-y-6">
-            <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-6">
-              <h2 className="text-xl font-bold text-yellow-800 mb-2">
-                ⚠️ 危険な操作
-              </h2>
-              <p className="text-yellow-700 mb-4">
-                すべての投票データをクリアします。この操作は取り消せません。
-              </p>
-              <button
-                onClick={handleReset}
-                disabled={isLoading}
-                className="w-full bg-red-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-red-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
-              >
-                {isLoading ? "クリア中..." : "すべての投票データをクリアする"}
-              </button>
-            </div>
+          {/* タブ */}
+          <div className="flex gap-2 mb-6 border-b">
+            <button
+              onClick={() => setActiveTab("results")}
+              className={`px-6 py-3 font-semibold transition ${
+                activeTab === "results"
+                  ? "border-b-2 border-blue-600 text-blue-600"
+                  : "text-gray-600 hover:text-gray-800"
+              }`}
+            >
+              集計結果
+            </button>
+            <button
+              onClick={() => setActiveTab("manage")}
+              className={`px-6 py-3 font-semibold transition ${
+                activeTab === "manage"
+                  ? "border-b-2 border-blue-600 text-blue-600"
+                  : "text-gray-600 hover:text-gray-800"
+              }`}
+            >
+              データ管理
+            </button>
+          </div>
 
-            {message && (
-              <div className={`p-4 rounded-lg ${
-                message.includes("クリアしました")
-                  ? "bg-green-100 text-green-800"
-                  : "bg-red-100 text-red-800"
-              }`}>
-                {message}
+          {/* 集計結果タブ */}
+          {activeTab === "results" && (
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-bold text-gray-800">投票結果</h2>
+                <button
+                  onClick={fetchResults}
+                  className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition"
+                >
+                  更新
+                </button>
               </div>
-            )}
 
-            <div className="flex gap-4">
-              <a
-                href="/"
-                className="flex-1 text-center bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition"
-              >
-                投票画面に戻る
-              </a>
-              <a
-                href="/results"
-                className="flex-1 text-center bg-gray-200 text-gray-800 py-3 px-6 rounded-lg font-semibold hover:bg-gray-300 transition"
-              >
-                集計結果を見る
-              </a>
+              {resultsLoading ? (
+                <div className="text-center py-12 text-gray-600">読み込み中...</div>
+              ) : teamRankings.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">まだ投票がありません</div>
+              ) : (
+                <div className="space-y-4">
+                  {teamRankings.map(({ team, totalScore, averageScore, voteCount, scores }, index) => {
+                    const percentage = (totalScore / maxScore) * 100;
+                    const isWinner = index === 0;
+
+                    return (
+                      <div
+                        key={team}
+                        className={`border-2 rounded-lg p-4 md:p-6 ${
+                          isWinner ? "border-yellow-400 bg-yellow-50" : "border-gray-200"
+                        }`}
+                      >
+                        <div className="flex items-center gap-4 mb-4">
+                          <span
+                            className={`text-3xl md:text-4xl font-bold ${
+                              isWinner ? "text-yellow-600" : "text-gray-400"
+                            }`}
+                          >
+                            {isWinner ? "🏆" : `#${index + 1}`}
+                          </span>
+                          <div className="flex-1">
+                            <h2 className="text-xl md:text-2xl font-bold text-gray-800">
+                              Team {team}
+                            </h2>
+                            <p className="text-sm text-gray-600">
+                              平均: {averageScore.toFixed(2)}点 ({voteCount}票)
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-2xl md:text-3xl font-bold text-blue-600">
+                              {totalScore.toFixed(1)}点
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              合計スコア
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="w-full bg-gray-200 rounded-full h-4 mb-4">
+                          <div
+                            className={`h-4 rounded-full transition-all duration-500 ${
+                              isWinner ? "bg-yellow-500" : "bg-blue-600"
+                            }`}
+                            style={{ width: `${percentage}%` }}
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+                          {Object.entries(scores).map(([criteriaId, data]) => (
+                            <div
+                              key={criteriaId}
+                              className="bg-white rounded p-3 border border-gray-200"
+                            >
+                              <div className="text-sm font-semibold text-gray-700">
+                                {CRITERIA_LABELS[criteriaId as keyof typeof CRITERIA_LABELS]}
+                              </div>
+                              <div className="flex items-baseline gap-2">
+                                <span className="text-lg font-bold text-blue-600">
+                                  {data.average.toFixed(2)}
+                                </span>
+                                <span className="text-xs text-gray-500">
+                                  (合計: {data.total.toFixed(1)}点)
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
+          )}
+
+          {/* データ管理タブ */}
+          {activeTab === "manage" && (
+            <div className="space-y-6">
+              <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-6">
+                <h2 className="text-xl font-bold text-yellow-800 mb-2">
+                  ⚠️ 危険な操作
+                </h2>
+                <p className="text-yellow-700 mb-4">
+                  すべての投票データをクリアします。この操作は取り消せません。
+                </p>
+                <button
+                  onClick={handleReset}
+                  disabled={isLoading}
+                  className="w-full bg-red-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-red-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+                >
+                  {isLoading ? "クリア中..." : "すべての投票データをクリアする"}
+                </button>
+              </div>
+
+              {message && (
+                <div className={`p-4 rounded-lg ${
+                  message.includes("クリアしました")
+                    ? "bg-green-100 text-green-800"
+                    : "bg-red-100 text-red-800"
+                }`}>
+                  {message}
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="mt-8 text-center">
+            <a
+              href="/"
+              className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition"
+            >
+              投票画面に戻る
+            </a>
           </div>
         </div>
       </div>

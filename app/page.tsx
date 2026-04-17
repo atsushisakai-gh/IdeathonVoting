@@ -127,12 +127,6 @@ export default function VotingPage() {
           <h1 className="text-3xl font-bold text-gray-800 mb-4">すべての投票完了</h1>
           <p className="text-gray-600 mb-2">すべてのチームへの投票が完了しました！</p>
           <p className="text-gray-600 mb-6">ご協力ありがとうございました。</p>
-          <a
-            href="/results"
-            className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition"
-          >
-            集計結果を見る
-          </a>
         </div>
       </div>
     );
@@ -257,15 +251,6 @@ export default function VotingPage() {
                 {message}
               </p>
             )}
-          </div>
-
-          <div className="mt-6 text-center">
-            <a
-              href="/results"
-              className="text-blue-600 hover:text-blue-800 underline"
-            >
-              集計結果を見る
-            </a>
           </div>
         </div>
       </div>
