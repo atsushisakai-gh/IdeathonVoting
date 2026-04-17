@@ -21,7 +21,6 @@ interface VoteResults {
   teams: {
     [team: string]: TeamScores;
   };
-  voteCount: number;
 }
 
 export default function ResultsPage() {
@@ -36,7 +35,7 @@ export default function ResultsPage() {
     try {
       const response = await fetch("/api/results");
       const data = await response.json();
-      setResults(data.results || { teams: {}, voteCount: 0 });
+      setResults(data.results || { teams: {} });
     } catch (error) {
       console.error("Failed to fetch results:", error);
     } finally {
@@ -78,7 +77,8 @@ export default function ResultsPage() {
   const teamRankings = Object.entries(results.teams).map(([team, scores]) => {
     const totalScore = Object.values(scores).reduce((sum, s) => sum + s.total, 0);
     const averageScore = Object.values(scores).reduce((sum, s) => sum + s.average, 0);
-    return { team, totalScore, averageScore, scores };
+    const voteCount = Object.values(scores)[0]?.count || 0;
+    return { team, totalScore, averageScore, voteCount, scores };
   }).sort((a, b) => b.totalScore - a.totalScore);
 
   const maxScore = teamRankings[0]?.totalScore || 1;
@@ -91,11 +91,11 @@ export default function ResultsPage() {
             投票結果
           </h1>
           <p className="text-gray-600 mb-8 text-center">
-            総投票数: {results.voteCount}票
+            リアルタイム集計
           </p>
 
           <div className="space-y-4">
-            {teamRankings.map(({ team, totalScore, averageScore, scores }, index) => {
+            {teamRankings.map(({ team, totalScore, averageScore, voteCount, scores }, index) => {
               const percentage = (totalScore / maxScore) * 100;
               const isWinner = index === 0;
 
@@ -119,7 +119,7 @@ export default function ResultsPage() {
                         Team {team}
                       </h2>
                       <p className="text-sm text-gray-600">
-                        平均: {averageScore.toFixed(2)}点
+                        平均: {averageScore.toFixed(2)}点 ({voteCount}票)
                       </p>
                     </div>
                     <div className="text-right">
@@ -127,7 +127,7 @@ export default function ResultsPage() {
                         {totalScore.toFixed(1)}点
                       </div>
                       <div className="text-xs text-gray-500">
-                        / {(results.voteCount * 20).toFixed(0)}点満点
+                        合計スコア
                       </div>
                     </div>
                   </div>

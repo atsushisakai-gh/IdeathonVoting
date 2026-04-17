@@ -15,57 +15,46 @@ interface VoteData {
   teams: {
     [team: string]: TeamScores;
   };
-  voteCount: number;
-}
-
-interface UserScores {
-  [team: string]: {
-    [criteriaId: string]: number;
-  };
 }
 
 // メモリストレージ（開発用）
 let memoryStorage: VoteData = {
   teams: {},
-  voteCount: 0,
 };
 
 export async function getVotes(): Promise<VoteData> {
   // 本番環境でVercel KVを使う場合は以下のようにする
   // if (process.env.KV_REST_API_URL) {
   //   const kv = createClient({...});
-  //   return await kv.get('votes') || { teams: {}, voteCount: 0 };
+  //   return await kv.get('votes') || { teams: {} };
   // }
 
   return memoryStorage;
 }
 
-export async function addVote(scores: UserScores): Promise<void> {
+export async function addVote(team: string, teamScores: Record<string, number>): Promise<void> {
   const votes = await getVotes();
 
-  // 各チーム、各観点のスコアを集計
-  Object.entries(scores).forEach(([team, teamScores]) => {
-    if (!votes.teams[team]) {
-      votes.teams[team] = {};
+  // チームのデータを初期化（まだない場合）
+  if (!votes.teams[team]) {
+    votes.teams[team] = {};
+  }
+
+  // 各観点のスコアを集計
+  Object.entries(teamScores).forEach(([criteriaId, score]) => {
+    if (!votes.teams[team][criteriaId]) {
+      votes.teams[team][criteriaId] = {
+        total: 0,
+        count: 0,
+        average: 0,
+      };
     }
 
-    Object.entries(teamScores).forEach(([criteriaId, score]) => {
-      if (!votes.teams[team][criteriaId]) {
-        votes.teams[team][criteriaId] = {
-          total: 0,
-          count: 0,
-          average: 0,
-        };
-      }
-
-      const criteria = votes.teams[team][criteriaId];
-      criteria.total += score;
-      criteria.count += 1;
-      criteria.average = criteria.total / criteria.count;
-    });
+    const criteria = votes.teams[team][criteriaId];
+    criteria.total += score;
+    criteria.count += 1;
+    criteria.average = criteria.total / criteria.count;
   });
-
-  votes.voteCount += 1;
 
   // 本番環境でVercel KVを使う場合
   // if (process.env.KV_REST_API_URL) {
@@ -78,11 +67,10 @@ export async function addVote(scores: UserScores): Promise<void> {
 export async function resetVotes(): Promise<void> {
   memoryStorage = {
     teams: {},
-    voteCount: 0,
   };
 
   // 本番環境でVercel KVを使う場合
   // if (process.env.KV_REST_API_URL) {
-  //   await kv.set('votes', { teams: {}, voteCount: 0 });
+  //   await kv.set('votes', { teams: {} });
   // }
 }

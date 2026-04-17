@@ -11,25 +11,35 @@ const CRITERIA = [
   { id: "ai_creativity", label: "AI活用の創意工夫", description: "AIを単なる効率化以上に使えたか" },
 ];
 
+type TeamScore = {
+  [criteriaId: string]: number;
+};
+
 type Scores = {
-  [team: string]: {
-    [criteriaId: string]: number;
-  };
+  [team: string]: TeamScore;
+};
+
+type VotedTeams = {
+  [team: string]: boolean;
 };
 
 export default function VotingPage() {
   const [scores, setScores] = useState<Scores>({});
-  const [hasVoted, setHasVoted] = useState(false);
+  const [votedTeams, setVotedTeams] = useState<VotedTeams>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [currentTeam, setCurrentTeam] = useState(0);
 
   useEffect(() => {
-    const voted = localStorage.getItem("hasVoted");
-    if (voted === "true") {
-      setHasVoted(true);
-    }
+    // 投票済みチームをlocalStorageから読み込み
+    const voted: VotedTeams = {};
+    TEAMS.forEach(team => {
+      const hasVoted = localStorage.getItem(`voted_${team}`) === "true";
+      voted[team] = hasVoted;
+    });
+    setVotedTeams(voted);
 
+    // スコアの初期化
     const initialScores: Scores = {};
     TEAMS.forEach(team => {
       initialScores[team] = {};
@@ -38,6 +48,12 @@ export default function VotingPage() {
       });
     });
     setScores(initialScores);
+
+    // 未投票のチームを探して表示
+    const firstUnvotedIndex = TEAMS.findIndex(t => !voted[t]);
+    if (firstUnvotedIndex !== -1) {
+      setCurrentTeam(firstUnvotedIndex);
+    }
   }, []);
 
   const handleScoreChange = (team: string, criteriaId: string, score: number) => {
@@ -54,30 +70,46 @@ export default function VotingPage() {
     return CRITERIA.every(criteria => scores[team]?.[criteria.id] > 0);
   };
 
-  const allTeamsComplete = () => {
-    return TEAMS.every(team => isTeamComplete(team));
+  const allTeamsVoted = () => {
+    return TEAMS.every(team => votedTeams[team]);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!allTeamsComplete()) {
-      setMessage("すべてのチームの評価を完了してください（1~5点で入力）");
+  const handleSubmitTeam = async (team: string) => {
+    if (!isTeamComplete(team)) {
+      setMessage("すべての観点を評価してください（1~5点で入力）");
       return;
     }
 
     setIsSubmitting(true);
+    setMessage("");
+
     try {
       const response = await fetch("/api/vote", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ scores }),
+        body: JSON.stringify({
+          team,
+          scores: scores[team]
+        }),
       });
 
       if (response.ok) {
-        localStorage.setItem("hasVoted", "true");
-        setHasVoted(true);
-        setMessage("投票ありがとうございました！");
+        // localStorageに保存
+        localStorage.setItem(`voted_${team}`, "true");
+        setVotedTeams(prev => ({ ...prev, [team]: true }));
+        setMessage(`Team ${team} への投票が完了しました！`);
+
+        // 次の未投票チームに移動
+        const nextUnvotedIndex = TEAMS.findIndex((t, i) =>
+          i > currentTeam && !votedTeams[t] && t !== team
+        );
+
+        if (nextUnvotedIndex !== -1) {
+          setTimeout(() => {
+            setCurrentTeam(nextUnvotedIndex);
+            setMessage("");
+          }, 1500);
+        }
       } else {
         setMessage("エラーが発生しました。もう一度お試しください。");
       }
@@ -88,12 +120,13 @@ export default function VotingPage() {
     }
   };
 
-  if (hasVoted) {
+  if (allTeamsVoted()) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
-          <h1 className="text-3xl font-bold text-gray-800 mb-4">投票完了</h1>
-          <p className="text-gray-600 mb-6">投票ありがとうございました！</p>
+          <h1 className="text-3xl font-bold text-gray-800 mb-4">すべての投票完了</h1>
+          <p className="text-gray-600 mb-2">すべてのチームへの投票が完了しました！</p>
+          <p className="text-gray-600 mb-6">ご協力ありがとうございました。</p>
           <a
             href="/results"
             className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition"
@@ -127,53 +160,76 @@ export default function VotingPage() {
                 className={`px-4 py-2 rounded-lg font-semibold transition whitespace-nowrap ${
                   currentTeam === index
                     ? "bg-blue-600 text-white"
-                    : isTeamComplete(t)
+                    : votedTeams[t]
                     ? "bg-green-100 text-green-800 border-2 border-green-500"
                     : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                 }`}
               >
                 Team {t}
-                {isTeamComplete(t) && currentTeam !== index && " ✓"}
+                {votedTeams[t] && currentTeam !== index && " ✓"}
               </button>
             ))}
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="bg-blue-50 rounded-lg p-6">
-              <h2 className="text-2xl font-bold text-blue-900 mb-6 text-center">
-                Team {team}
-              </h2>
-
-              <div className="space-y-6">
-                {CRITERIA.map((criteria) => (
-                  <div key={criteria.id} className="bg-white rounded-lg p-4 shadow-sm">
-                    <div className="mb-3">
-                      <h3 className="font-semibold text-gray-800 text-lg">
-                        {criteria.label}
-                      </h3>
-                      <p className="text-sm text-gray-600">{criteria.description}</p>
-                    </div>
-
-                    <div className="flex gap-2 justify-center">
-                      {[1, 2, 3, 4, 5].map((score) => (
-                        <button
-                          key={score}
-                          type="button"
-                          onClick={() => handleScoreChange(team, criteria.id, score)}
-                          className={`w-12 h-12 rounded-lg font-bold text-lg transition ${
-                            scores[team]?.[criteria.id] === score
-                              ? "bg-blue-600 text-white shadow-lg scale-110"
-                              : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                          }`}
-                        >
-                          {score}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ))}
+          <div className="space-y-6">
+            {votedTeams[team] ? (
+              <div className="bg-green-50 border-2 border-green-500 rounded-lg p-8 text-center">
+                <div className="text-6xl mb-4">✓</div>
+                <h2 className="text-2xl font-bold text-green-800 mb-2">
+                  Team {team} への投票完了
+                </h2>
+                <p className="text-green-700">
+                  このチームへの投票は完了しています
+                </p>
               </div>
-            </div>
+            ) : (
+              <>
+                <div className="bg-blue-50 rounded-lg p-6">
+                  <h2 className="text-2xl font-bold text-blue-900 mb-6 text-center">
+                    Team {team}
+                  </h2>
+
+                  <div className="space-y-6">
+                    {CRITERIA.map((criteria) => (
+                      <div key={criteria.id} className="bg-white rounded-lg p-4 shadow-sm">
+                        <div className="mb-3">
+                          <h3 className="font-semibold text-gray-800 text-lg">
+                            {criteria.label}
+                          </h3>
+                          <p className="text-sm text-gray-600">{criteria.description}</p>
+                        </div>
+
+                        <div className="flex gap-2 justify-center">
+                          {[1, 2, 3, 4, 5].map((score) => (
+                            <button
+                              key={score}
+                              type="button"
+                              onClick={() => handleScoreChange(team, criteria.id, score)}
+                              className={`w-12 h-12 rounded-lg font-bold text-lg transition ${
+                                scores[team]?.[criteria.id] === score
+                                  ? "bg-blue-600 text-white shadow-lg scale-110"
+                                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                              }`}
+                            >
+                              {score}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* このチームに投票ボタン */}
+                <button
+                  onClick={() => handleSubmitTeam(team)}
+                  disabled={isSubmitting || !isTeamComplete(team)}
+                  className="w-full py-4 bg-green-600 text-white text-lg rounded-lg font-semibold hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition"
+                >
+                  {isSubmitting ? "送信中..." : `Team ${team} に投票する`}
+                </button>
+              </>
+            )}
 
             {/* ナビゲーションボタン */}
             <div className="flex gap-4 justify-between">
@@ -186,23 +242,14 @@ export default function VotingPage() {
                 ← 前のチーム
               </button>
 
-              {currentTeam < TEAMS.length - 1 ? (
-                <button
-                  type="button"
-                  onClick={() => setCurrentTeam(Math.min(TEAMS.length - 1, currentTeam + 1))}
-                  className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700"
-                >
-                  次のチーム →
-                </button>
-              ) : (
-                <button
-                  type="submit"
-                  disabled={isSubmitting || !allTeamsComplete()}
-                  className="px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                >
-                  {isSubmitting ? "送信中..." : "投票を完了する"}
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => setCurrentTeam(Math.min(TEAMS.length - 1, currentTeam + 1))}
+                disabled={currentTeam === TEAMS.length - 1}
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                次のチーム →
+              </button>
             </div>
 
             {message && (
@@ -210,7 +257,7 @@ export default function VotingPage() {
                 {message}
               </p>
             )}
-          </form>
+          </div>
 
           <div className="mt-6 text-center">
             <a
