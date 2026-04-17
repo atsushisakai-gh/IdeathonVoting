@@ -121,10 +121,20 @@ export default function AdminPage() {
     setMessage("");
 
     try {
+      // localStorageから保存されているパスワードを取得
+      let adminPassword = password;
+      if (!adminPassword) {
+        const adminAuth = localStorage.getItem("adminAuth");
+        if (adminAuth) {
+          const { password: savedPassword } = JSON.parse(adminAuth);
+          adminPassword = savedPassword;
+        }
+      }
+
       const response = await fetch("/api/admin/reset", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ password: adminPassword }),
       });
 
       if (response.ok) {
