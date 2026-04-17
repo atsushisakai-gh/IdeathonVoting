@@ -140,6 +140,37 @@ const CRITERIA = [
 }
 ```
 
+## 管理者機能
+
+### 投票データをクリアする
+
+管理者ページでデータをリセットできます：
+
+1. `/admin` にアクセス
+2. パスワードを入力してログイン（デフォルト: `admin2025`）
+3. 「すべての投票データをクリアする」ボタンをクリック
+
+### 管理者パスワードの変更
+
+**重要**: 本番環境では必ずパスワードを変更してください。
+
+#### Vercelでの設定
+
+1. Vercelダッシュボードで "Settings" → "Environment Variables"
+2. 以下の環境変数を追加：
+   - `ADMIN_PASSWORD`: サーバー側の認証用（例: `your-secure-password-123`）
+   - `NEXT_PUBLIC_ADMIN_PASSWORD`: クライアント側の認証用（同じ値）
+3. プロジェクトを再デプロイ
+
+#### ローカル開発での設定
+
+`.env.local` に追加：
+
+```bash
+ADMIN_PASSWORD=your-secure-password
+NEXT_PUBLIC_ADMIN_PASSWORD=your-secure-password
+```
+
 ## トラブルシューティング
 
 ### データが保存されない
@@ -152,6 +183,11 @@ const CRITERIA = [
 
 - `.env.local` ファイルが正しく作成されているか確認
 - 開発サーバーを再起動
+
+### 管理者ページにアクセスできない
+
+- パスワードが正しいか確認
+- 本番環境で環境変数が設定されているか確認（Vercel Settings → Environment Variables）
 
 ## ライセンス
 
