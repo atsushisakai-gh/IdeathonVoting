@@ -213,60 +213,81 @@ export default function AdminPage() {
   const maxScore = teamRankings[0]?.totalScore || 1;
 
   return (
-    <div className="min-h-screen py-8 px-4 bg-gray-50">
-      <div className="max-w-5xl mx-auto">
-        <div className="bg-white rounded-lg shadow-lg p-6 md:p-8">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
+    <div className="min-h-screen py-8 px-4 relative z-10">
+      <div className="max-w-6xl mx-auto animate-fade-in">
+        <div className="card-neon p-6 md:p-10">
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-3xl md:text-4xl font-bold glow-text" style={{ color: 'var(--color-neon-magenta)' }}>
               管理者ページ
             </h1>
             <button
               onClick={handleLogout}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm font-semibold"
+              className="px-5 py-2 rounded-xl text-sm font-semibold transition-all"
+              style={{
+                background: 'rgba(255, 0, 110, 0.1)',
+                border: '2px solid var(--color-neon-magenta)',
+                color: 'var(--color-neon-magenta)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'var(--color-neon-magenta)';
+                e.currentTarget.style.color = 'white';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 0, 110, 0.1)';
+                e.currentTarget.style.color = 'var(--color-neon-magenta)';
+              }}
             >
               ログアウト
             </button>
           </div>
 
           {/* タブ */}
-          <div className="flex gap-2 mb-6 border-b overflow-x-auto">
+          <div className="flex gap-3 mb-8 overflow-x-auto pb-2" style={{ borderBottom: '2px solid rgba(0, 245, 255, 0.1)' }}>
             <button
               onClick={() => setActiveTab("results")}
-              className={`px-6 py-3 font-semibold transition whitespace-nowrap ${
-                activeTab === "results"
-                  ? "border-b-2 border-blue-600 text-blue-600"
-                  : "text-gray-600 hover:text-gray-800"
+              className={`px-6 py-3 font-semibold transition-all whitespace-nowrap rounded-t-xl ${
+                activeTab === "results" ? "glow-text" : ""
               }`}
+              style={{
+                color: activeTab === "results" ? 'var(--color-neon-cyan)' : 'var(--color-text-secondary)',
+                borderBottom: activeTab === "results" ? '3px solid var(--color-neon-cyan)' : 'none',
+              }}
             >
               集計結果
             </button>
             <button
               onClick={() => setActiveTab("ranking")}
-              className={`px-6 py-3 font-semibold transition whitespace-nowrap ${
-                activeTab === "ranking"
-                  ? "border-b-2 border-blue-600 text-blue-600"
-                  : "text-gray-600 hover:text-gray-800"
+              className={`px-6 py-3 font-semibold transition-all whitespace-nowrap rounded-t-xl ${
+                activeTab === "ranking" ? "glow-text" : ""
               }`}
+              style={{
+                color: activeTab === "ranking" ? 'var(--color-neon-cyan)' : 'var(--color-text-secondary)',
+                borderBottom: activeTab === "ranking" ? '3px solid var(--color-neon-cyan)' : 'none',
+              }}
             >
               ランキング
             </button>
             <button
               onClick={() => setActiveTab("comments")}
-              className={`px-6 py-3 font-semibold transition whitespace-nowrap ${
-                activeTab === "comments"
-                  ? "border-b-2 border-blue-600 text-blue-600"
-                  : "text-gray-600 hover:text-gray-800"
+              className={`px-6 py-3 font-semibold transition-all whitespace-nowrap rounded-t-xl ${
+                activeTab === "comments" ? "glow-text" : ""
               }`}
+              style={{
+                color: activeTab === "comments" ? 'var(--color-neon-cyan)' : 'var(--color-text-secondary)',
+                borderBottom: activeTab === "comments" ? '3px solid var(--color-neon-cyan)' : 'none',
+              }}
             >
               コメント一覧
             </button>
             <button
               onClick={() => setActiveTab("manage")}
-              className={`px-6 py-3 font-semibold transition whitespace-nowrap ${
-                activeTab === "manage"
-                  ? "border-b-2 border-blue-600 text-blue-600"
-                  : "text-gray-600 hover:text-gray-800"
+              className={`px-6 py-3 font-semibold transition-all whitespace-nowrap rounded-t-xl ${
+                activeTab === "manage" ? "glow-text" : ""
               }`}
+              style={{
+                color: activeTab === "manage" ? 'var(--color-neon-cyan)' : 'var(--color-text-secondary)',
+                borderBottom: activeTab === "manage" ? '3px solid var(--color-neon-cyan)' : 'none',
+              }}
             >
               データ管理
             </button>
@@ -276,19 +297,45 @@ export default function AdminPage() {
           {activeTab === "results" && (
             <div className="space-y-6">
               <div className="flex justify-between items-center">
-                <h2 className="text-xl font-bold text-gray-800">投票結果</h2>
+                <div>
+                  <h2 className="text-xl font-bold glow-text" style={{ color: 'var(--color-neon-cyan)' }}>投票結果</h2>
+                  <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)' }}>
+                    投票者数: <span className="font-bold glow-text" style={{ color: 'var(--color-neon-yellow)' }}>
+                      {results?.voterScores ? Object.keys(results.voterScores).length : 0}人
+                    </span>
+                  </p>
+                </div>
                 <button
                   onClick={fetchResults}
-                  className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition"
+                  className="px-5 py-2 rounded-xl font-semibold transition-all"
+                  style={{
+                    background: 'var(--color-dark-surface)',
+                    border: '2px solid rgba(0, 245, 255, 0.2)',
+                    color: 'var(--color-neon-cyan)',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--color-neon-cyan)';
+                    e.currentTarget.style.boxShadow = 'var(--shadow-glow-cyan)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(0, 245, 255, 0.2)';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
                 >
                   更新
                 </button>
               </div>
 
               {resultsLoading ? (
-                <div className="text-center py-12 text-gray-600">読み込み中...</div>
+                <div className="text-center py-12" style={{ color: 'var(--color-text-secondary)' }}>読み込み中...</div>
               ) : teamRankings.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">まだ投票がありません</div>
+                <div className="text-center py-12 rounded-xl" style={{
+                  background: 'var(--color-dark-surface)',
+                  color: 'var(--color-text-secondary)',
+                  border: '2px solid rgba(0, 245, 255, 0.1)'
+                }}>
+                  まだ投票がありません
+                </div>
               ) : (
                 <div className="space-y-4">
                   {teamRankings.map(({ team, totalScore, averageScore, voteCount, scores }, index) => {
@@ -298,42 +345,51 @@ export default function AdminPage() {
                     return (
                       <div
                         key={team}
-                        className={`border-2 rounded-lg p-4 md:p-6 ${
-                          isWinner ? "border-yellow-400 bg-yellow-50" : "border-gray-200"
-                        }`}
+                        className="rounded-xl p-4 md:p-6 border-2 animate-slide-up"
+                        style={{
+                          background: isWinner ? 'rgba(255, 190, 11, 0.05)' : 'var(--color-dark-surface)',
+                          borderColor: isWinner ? 'var(--color-neon-yellow)' : 'rgba(0, 245, 255, 0.1)',
+                          animationDelay: `${index * 0.1}s`
+                        }}
                       >
                         <div className="flex items-center gap-4 mb-4">
-                          <span
-                            className={`text-3xl md:text-4xl font-bold ${
-                              isWinner ? "text-yellow-600" : "text-gray-400"
-                            }`}
-                          >
+                          <span className="text-3xl md:text-4xl font-bold glow-text" style={{
+                            color: isWinner ? 'var(--color-neon-yellow)' : 'var(--color-text-muted)'
+                          }}>
                             {isWinner ? "🏆" : `#${index + 1}`}
                           </span>
                           <div className="flex-1">
-                            <h2 className="text-xl md:text-2xl font-bold text-gray-800">
+                            <h2 className="text-xl md:text-2xl font-bold glow-text" style={{
+                              color: isWinner ? 'var(--color-neon-yellow)' : 'var(--color-neon-cyan)'
+                            }}>
                               Team {team}
                             </h2>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
                               平均: {averageScore.toFixed(2)}点 ({voteCount}票)
                             </p>
                           </div>
                           <div className="text-right">
-                            <div className="text-2xl md:text-3xl font-bold text-blue-600">
+                            <div className="text-2xl md:text-3xl font-bold glow-text" style={{
+                              color: isWinner ? 'var(--color-neon-yellow)' : 'var(--color-neon-cyan)'
+                            }}>
                               {totalScore.toFixed(1)}点
                             </div>
-                            <div className="text-xs text-gray-500">
+                            <div className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
                               合計スコア
                             </div>
                           </div>
                         </div>
 
-                        <div className="w-full bg-gray-200 rounded-full h-4 mb-4">
+                        <div className="w-full rounded-full h-4 mb-4" style={{
+                          background: 'var(--color-dark-base)'
+                        }}>
                           <div
-                            className={`h-4 rounded-full transition-all duration-500 ${
-                              isWinner ? "bg-yellow-500" : "bg-blue-600"
-                            }`}
-                            style={{ width: `${percentage}%` }}
+                            className="h-4 rounded-full transition-all duration-500"
+                            style={{
+                              width: `${percentage}%`,
+                              background: isWinner ? 'var(--color-neon-yellow)' : 'var(--gradient-primary)',
+                              boxShadow: isWinner ? '0 0 10px var(--color-neon-yellow)' : 'var(--shadow-glow-cyan)'
+                            }}
                           />
                         </div>
 
@@ -341,16 +397,20 @@ export default function AdminPage() {
                           {Object.entries(scores).map(([criteriaId, data]) => (
                             <div
                               key={criteriaId}
-                              className="bg-white rounded p-3 border border-gray-200"
+                              className="rounded p-3 border"
+                              style={{
+                                background: 'var(--color-dark-base)',
+                                borderColor: 'rgba(0, 245, 255, 0.1)'
+                              }}
                             >
-                              <div className="text-sm font-semibold text-gray-700">
+                              <div className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
                                 {CRITERIA_LABELS[criteriaId as keyof typeof CRITERIA_LABELS]}
                               </div>
                               <div className="flex items-baseline gap-2">
-                                <span className="text-lg font-bold text-blue-600">
+                                <span className="text-lg font-bold glow-text" style={{ color: 'var(--color-neon-cyan)' }}>
                                   {data.average.toFixed(2)}
                                 </span>
-                                <span className="text-xs text-gray-500">
+                                <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
                                   (合計: {data.total.toFixed(1)}点)
                                 </span>
                               </div>
