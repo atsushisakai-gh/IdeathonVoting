@@ -17,15 +17,20 @@ interface VoterTeamData {
   comment?: string;
 }
 
+interface VoterInfo {
+  myTeam?: string; // 投票者の所属チーム
+  votes: {
+    [team: string]: VoterTeamData;
+  };
+}
+
 interface VoteData {
   teams: {
     [team: string]: TeamScores;
   };
-  // 投票者ごとの投票記録（voterId -> team -> { scores, comment }）
+  // 投票者ごとの投票記録（voterId -> { myTeam, votes }）
   voterScores: {
-    [voterId: string]: {
-      [team: string]: VoterTeamData;
-    };
+    [voterId: string]: VoterInfo;
   };
 }
 
@@ -58,7 +63,8 @@ export async function addVote(
   team: string,
   teamScores: Record<string, number>,
   voterId: string,
-  comment?: string
+  comment?: string,
+  myTeam?: string
 ): Promise<void> {
   const votes = await getVotes();
 
@@ -69,11 +75,17 @@ export async function addVote(
 
   // 投票者のデータを初期化
   if (!votes.voterScores[voterId]) {
-    votes.voterScores[voterId] = {};
+    votes.voterScores[voterId] = {
+      myTeam: myTeam,
+      votes: {}
+    };
+  } else if (myTeam && !votes.voterScores[voterId].myTeam) {
+    // 既存の投票者でmyTeamが未設定の場合は設定
+    votes.voterScores[voterId].myTeam = myTeam;
   }
 
   // 以前の投票があれば、それを引く（再投票の場合）
-  const previousVote = votes.voterScores[voterId][team];
+  const previousVote = votes.voterScores[voterId].votes[team];
   if (previousVote?.scores) {
     Object.entries(previousVote.scores).forEach(([criteriaId, oldScore]) => {
       if (votes.teams[team][criteriaId]) {
@@ -104,7 +116,7 @@ export async function addVote(
   });
 
   // 投票者の記録を更新
-  votes.voterScores[voterId][team] = {
+  votes.voterScores[voterId].votes[team] = {
     scores: teamScores,
     comment: comment || undefined,
   };

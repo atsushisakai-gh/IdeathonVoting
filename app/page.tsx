@@ -156,7 +156,8 @@ export default function VotingPage() {
           team,
           scores: scores[team],
           voterId,
-          comment: comments[team] || undefined
+          comment: comments[team] || undefined,
+          myTeam: myTeam || undefined
         }),
       });
 

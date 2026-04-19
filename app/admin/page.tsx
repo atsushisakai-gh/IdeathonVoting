@@ -24,14 +24,19 @@ interface VoterTeamData {
   comment?: string;
 }
 
+interface VoterInfo {
+  myTeam?: string;
+  votes: {
+    [team: string]: VoterTeamData;
+  };
+}
+
 interface VoteResults {
   teams: {
     [team: string]: TeamScores;
   };
   voterScores?: {
-    [voterId: string]: {
-      [team: string]: VoterTeamData;
-    };
+    [voterId: string]: VoterInfo;
   };
 }
 
@@ -299,11 +304,53 @@ export default function AdminPage() {
               <div className="flex justify-between items-center">
                 <div>
                   <h2 className="text-xl font-bold glow-text" style={{ color: 'var(--color-neon-cyan)' }}>投票結果</h2>
-                  <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)' }}>
-                    投票者数: <span className="font-bold glow-text" style={{ color: 'var(--color-neon-yellow)' }}>
-                      {results?.voterScores ? Object.keys(results.voterScores).length : 0}人
-                    </span>
-                  </p>
+                  {results?.voterScores && (() => {
+                    const totalVoters = Object.keys(results.voterScores).length;
+                    const TEAMS = ["A", "B", "C", "D", "E", "F", "G"];
+                    const votersByTeam: { [team: string]: number } = {};
+                    TEAMS.forEach(team => votersByTeam[team] = 0);
+                    let unknownCount = 0;
+
+                    Object.values(results.voterScores).forEach(voterInfo => {
+                      if (voterInfo.myTeam && TEAMS.includes(voterInfo.myTeam)) {
+                        votersByTeam[voterInfo.myTeam]++;
+                      } else {
+                        unknownCount++;
+                      }
+                    });
+
+                    return (
+                      <div className="mt-2 space-y-1">
+                        <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                          合計投票者数: <span className="font-bold glow-text" style={{ color: 'var(--color-neon-yellow)' }}>
+                            {totalVoters}人
+                          </span>
+                        </p>
+                        <div className="flex flex-wrap gap-3 mt-2">
+                          {TEAMS.map(team => (
+                            votersByTeam[team] > 0 && (
+                              <span key={team} className="text-xs px-2 py-1 rounded" style={{
+                                background: 'rgba(0, 245, 255, 0.1)',
+                                border: '1px solid rgba(0, 245, 255, 0.3)',
+                                color: 'var(--color-neon-cyan)'
+                              }}>
+                                Team {team}: {votersByTeam[team]}人
+                              </span>
+                            )
+                          ))}
+                          {unknownCount > 0 && (
+                            <span className="text-xs px-2 py-1 rounded" style={{
+                              background: 'rgba(160, 168, 201, 0.1)',
+                              border: '1px solid rgba(160, 168, 201, 0.3)',
+                              color: 'var(--color-text-secondary)'
+                            }}>
+                              所属不明: {unknownCount}人
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
                 <button
                   onClick={fetchResults}
@@ -428,34 +475,53 @@ export default function AdminPage() {
           {/* ランキングタブ */}
           {activeTab === "ranking" && (
             <div className="space-y-6">
-              <h2 className="text-xl font-bold text-gray-800">ランキング</h2>
+              <h2 className="text-xl font-bold glow-text" style={{ color: 'var(--color-neon-cyan)' }}>ランキング</h2>
 
               {/* 総合ランキング */}
-              <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-400 rounded-lg p-6">
-                <h3 className="text-lg font-bold text-gray-800 mb-4">🏆 総合ランキング</h3>
+              <div className="rounded-xl p-6 border-2 animate-slide-up" style={{
+                background: 'rgba(255, 190, 11, 0.05)',
+                borderColor: 'var(--color-neon-yellow)',
+              }}>
+                <h3 className="text-lg font-bold glow-text mb-4" style={{ color: 'var(--color-neon-yellow)' }}>
+                  🏆 総合ランキング
+                </h3>
                 <div className="space-y-2">
                   {teamRankings.map(({ team, totalScore, voteCount }, index) => (
                     <div
                       key={team}
-                      className={`flex items-center justify-between p-3 rounded-lg ${
-                        index === 0
-                          ? "bg-yellow-200 font-bold"
+                      className="flex items-center justify-between p-3 rounded-lg"
+                      style={{
+                        background: index === 0
+                          ? 'rgba(255, 190, 11, 0.2)'
                           : index === 1
-                          ? "bg-gray-200"
+                          ? 'rgba(192, 192, 192, 0.1)'
                           : index === 2
-                          ? "bg-orange-100"
-                          : "bg-white"
-                      }`}
+                          ? 'rgba(205, 127, 50, 0.1)'
+                          : 'var(--color-dark-base)',
+                        border: index < 3 ? '1px solid rgba(255, 190, 11, 0.3)' : '1px solid rgba(0, 245, 255, 0.1)',
+                      }}
                     >
                       <div className="flex items-center gap-3">
-                        <span className="text-2xl font-bold text-gray-600 w-8">
+                        <span className="text-2xl font-bold w-8" style={{
+                          color: index < 3 ? 'var(--color-neon-yellow)' : 'var(--color-text-muted)'
+                        }}>
                           {index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `${index + 1}.`}
                         </span>
-                        <span className="text-lg font-semibold">Team {team}</span>
+                        <span className="text-lg font-semibold glow-text" style={{
+                          color: index === 0 ? 'var(--color-neon-yellow)' : 'var(--color-neon-cyan)'
+                        }}>
+                          Team {team}
+                        </span>
                       </div>
                       <div className="text-right">
-                        <div className="text-xl font-bold text-blue-600">{totalScore.toFixed(1)}点</div>
-                        <div className="text-xs text-gray-500">({voteCount}票)</div>
+                        <div className="text-xl font-bold glow-text" style={{
+                          color: index === 0 ? 'var(--color-neon-yellow)' : 'var(--color-neon-cyan)'
+                        }}>
+                          {totalScore.toFixed(1)}点
+                        </div>
+                        <div className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+                          ({voteCount}票)
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -464,7 +530,7 @@ export default function AdminPage() {
 
               {/* 分野別ランキング */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {Object.entries(CRITERIA_LABELS).map(([criteriaId, label]) => {
+                {Object.entries(CRITERIA_LABELS).map(([criteriaId, label], idx) => {
                   const criteriaRankings = teamRankings
                     .map(({ team, scores }) => ({
                       team,
@@ -475,27 +541,44 @@ export default function AdminPage() {
                     .sort((a, b) => b.score - a.score);
 
                   return (
-                    <div key={criteriaId} className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                      <h4 className="font-bold text-gray-800 mb-3">{label}</h4>
+                    <div key={criteriaId} className="rounded-xl p-4 border-2 animate-slide-up" style={{
+                      background: 'var(--color-dark-surface)',
+                      borderColor: 'rgba(0, 245, 255, 0.2)',
+                      animationDelay: `${idx * 0.1}s`
+                    }}>
+                      <h4 className="font-bold glow-text mb-3" style={{ color: 'var(--color-neon-cyan)' }}>
+                        {label}
+                      </h4>
                       <div className="space-y-2">
                         {criteriaRankings.slice(0, 5).map(({ team, score, average, count }, index) => (
                           <div
                             key={team}
-                            className={`flex items-center justify-between p-2 rounded ${
-                              index === 0 ? "bg-blue-200 font-semibold" : "bg-white"
-                            }`}
+                            className="flex items-center justify-between p-2 rounded"
+                            style={{
+                              background: index === 0 ? 'rgba(0, 245, 255, 0.1)' : 'var(--color-dark-base)',
+                              border: index === 0 ? '1px solid rgba(0, 245, 255, 0.3)' : '1px solid rgba(0, 245, 255, 0.05)',
+                            }}
                           >
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-bold text-gray-600 w-6">
+                              <span className="text-sm font-bold w-6" style={{
+                                color: index === 0 ? 'var(--color-neon-cyan)' : 'var(--color-text-muted)'
+                              }}>
                                 {index + 1}.
                               </span>
-                              <span className="text-sm">Team {team}</span>
+                              <span className="text-sm" style={{
+                                color: index === 0 ? 'var(--color-neon-cyan)' : 'var(--color-text-primary)',
+                                fontWeight: index === 0 ? 600 : 400
+                              }}>
+                                Team {team}
+                              </span>
                             </div>
                             <div className="text-right">
-                              <div className="text-sm font-bold text-blue-600">
+                              <div className="text-sm font-bold" style={{
+                                color: index === 0 ? 'var(--color-neon-cyan)' : 'var(--color-text-primary)'
+                              }}>
                                 {score.toFixed(1)}点
                               </div>
-                              <div className="text-xs text-gray-500">
+                              <div className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
                                 平均 {average.toFixed(2)}
                               </div>
                             </div>
@@ -512,35 +595,48 @@ export default function AdminPage() {
           {/* コメント一覧タブ */}
           {activeTab === "comments" && (
             <div className="space-y-6">
-              <h2 className="text-xl font-bold text-gray-800">コメント一覧</h2>
+              <h2 className="text-xl font-bold glow-text" style={{ color: 'var(--color-neon-cyan)' }}>コメント一覧</h2>
 
               {results && Object.keys(results.teams).length > 0 ? (
                 <div className="space-y-6">
-                  {teamRankings.map(({ team }) => {
+                  {teamRankings.map(({ team }, index) => {
                     // このチームへのコメントを収集
                     const teamComments: Array<{ voterId: string; comment: string }> = [];
                     if (results.voterScores) {
-                      Object.entries(results.voterScores).forEach(([voterId, voterData]) => {
-                        if (voterData[team]?.comment) {
+                      Object.entries(results.voterScores).forEach(([voterId, voterInfo]) => {
+                        if (voterInfo.votes[team]?.comment) {
                           teamComments.push({
                             voterId: voterId.substring(0, 20) + "...",
-                            comment: voterData[team].comment,
+                            comment: voterInfo.votes[team].comment,
                           });
                         }
                       });
                     }
 
                     return (
-                      <div key={team} className="border-2 border-gray-200 rounded-lg p-6">
-                        <h3 className="text-xl font-bold text-gray-800 mb-4">Team {team}</h3>
+                      <div key={team} className="rounded-xl p-6 border-2 animate-slide-up" style={{
+                        background: 'var(--color-dark-surface)',
+                        borderColor: 'rgba(0, 245, 255, 0.2)',
+                        animationDelay: `${index * 0.1}s`
+                      }}>
+                        <h3 className="text-xl font-bold glow-text mb-4" style={{ color: 'var(--color-neon-cyan)' }}>
+                          Team {team}
+                        </h3>
                         {teamComments.length === 0 ? (
-                          <p className="text-gray-500 italic">コメントはありません</p>
+                          <p className="italic" style={{ color: 'var(--color-text-muted)' }}>コメントはありません</p>
                         ) : (
                           <div className="space-y-3">
-                            {teamComments.map((item, index) => (
-                              <div key={index} className="bg-gray-50 rounded-lg p-4">
-                                <p className="text-gray-800 whitespace-pre-wrap">{item.comment}</p>
-                                <p className="text-xs text-gray-400 mt-2">投票者ID: {item.voterId}</p>
+                            {teamComments.map((item, idx) => (
+                              <div key={idx} className="rounded-lg p-4" style={{
+                                background: 'var(--color-dark-base)',
+                                border: '1px solid rgba(0, 245, 255, 0.1)'
+                              }}>
+                                <p className="whitespace-pre-wrap" style={{ color: 'var(--color-text-primary)' }}>
+                                  {item.comment}
+                                </p>
+                                <p className="text-xs mt-2" style={{ color: 'var(--color-text-muted)' }}>
+                                  投票者ID: {item.voterId}
+                                </p>
                               </div>
                             ))}
                           </div>
@@ -550,7 +646,13 @@ export default function AdminPage() {
                   })}
                 </div>
               ) : (
-                <p className="text-center text-gray-500">まだコメントがありません</p>
+                <div className="text-center py-12 rounded-xl" style={{
+                  background: 'var(--color-dark-surface)',
+                  color: 'var(--color-text-secondary)',
+                  border: '2px solid rgba(0, 245, 255, 0.1)'
+                }}>
+                  まだコメントがありません
+                </div>
               )}
             </div>
           )}
@@ -558,28 +660,52 @@ export default function AdminPage() {
           {/* データ管理タブ */}
           {activeTab === "manage" && (
             <div className="space-y-6">
-              <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-6">
-                <h2 className="text-xl font-bold text-yellow-800 mb-2">
+              <div className="rounded-xl p-6 border-2 animate-slide-up" style={{
+                background: 'rgba(255, 190, 11, 0.05)',
+                borderColor: 'var(--color-neon-yellow)',
+              }}>
+                <h2 className="text-xl font-bold glow-text mb-2" style={{ color: 'var(--color-neon-yellow)' }}>
                   ⚠️ 危険な操作
                 </h2>
-                <p className="text-yellow-700 mb-4">
+                <p className="mb-4" style={{ color: 'var(--color-text-secondary)' }}>
                   すべての投票データをクリアします。この操作は取り消せません。
                 </p>
                 <button
                   onClick={handleReset}
                   disabled={isLoading}
-                  className="w-full bg-red-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-red-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  className="w-full py-3 px-6 rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{
+                    background: 'linear-gradient(135deg, var(--color-neon-magenta) 0%, #c2185b 100%)',
+                    color: 'white',
+                    border: 'none',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isLoading) {
+                      e.currentTarget.style.boxShadow = 'var(--shadow-glow-magenta)';
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.boxShadow = 'none';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                  }}
                 >
                   {isLoading ? "クリア中..." : "すべての投票データをクリアする"}
                 </button>
               </div>
 
               {message && (
-                <div className={`p-4 rounded-lg ${
-                  message.includes("クリアしました")
-                    ? "bg-green-100 text-green-800"
-                    : "bg-red-100 text-red-800"
-                }`}>
+                <div className="p-4 rounded-xl border-2 animate-slide-up" style={{
+                  background: message.includes("クリアしました")
+                    ? 'rgba(0, 255, 136, 0.1)'
+                    : 'rgba(255, 0, 110, 0.1)',
+                  borderColor: message.includes("クリアしました")
+                    ? 'var(--color-neon-green)'
+                    : 'var(--color-neon-magenta)',
+                  color: message.includes("クリアしました")
+                    ? 'var(--color-neon-green)'
+                    : 'var(--color-neon-magenta)',
+                }}>
                   {message}
                 </div>
               )}
@@ -589,7 +715,7 @@ export default function AdminPage() {
           <div className="mt-8 text-center">
             <a
               href="/"
-              className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition"
+              className="btn-primary inline-block"
             >
               投票画面に戻る
             </a>

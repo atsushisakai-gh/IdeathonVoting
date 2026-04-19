@@ -4,7 +4,7 @@ import { addVote } from "@/lib/storage";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { team, scores, voterId, comment } = body;
+    const { team, scores, voterId, comment, myTeam } = body;
 
     if (!team || typeof team !== "string") {
       return NextResponse.json(
@@ -35,6 +35,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 所属チームの検証（任意）
+    if (myTeam !== undefined && typeof myTeam !== "string") {
+      return NextResponse.json(
+        { error: "Invalid myTeam" },
+        { status: 400 }
+      );
+    }
+
     // スコアの検証
     for (const [criteriaId, score] of Object.entries(scores as Record<string, unknown>)) {
       if (typeof score !== "number" || score < 1 || score > 5) {
@@ -45,7 +53,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    await addVote(team, scores as Record<string, number>, voterId, comment);
+    await addVote(team, scores as Record<string, number>, voterId, comment, myTeam);
 
     return NextResponse.json({ success: true });
   } catch (error) {
